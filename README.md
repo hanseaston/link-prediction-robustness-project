@@ -9,7 +9,7 @@ Resources:
 4. [Project report](https://www.overleaf.com/project/63c6ce9ebfd91ea9e32541d1)
 
 Contributors:
-1. William William Howard-Snyder
+1. William Howard-Snyder
 2. Pallavi Banerjee
 3. Therese Pena Pacio
 4. Hans Easton

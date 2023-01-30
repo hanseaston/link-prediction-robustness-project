@@ -13,3 +13,9 @@ Contributors:
 2. Pallavi Banerjee
 3. Therese Pena Pacio
 4. Hans Easton
+
+Installation:
+
+1. activate your virtual env (e.x conda)
+2. run `pip3 install -r requirements.txt`
+3. explore with `python main.py`

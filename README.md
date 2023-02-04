@@ -14,8 +14,10 @@ Contributors:
 3. Therese Pena Pacio
 4. Hans Easton
 
-Installation:
+Setup Instructions:
 
-1. activate your virtual env (e.x conda)
-2. run `pip3 install -r requirements.txt`
-3. explore with `python main.py`
+1. Clone the repo onto your machine with `git clone https://github.com/hanseaston/LinkPredictionOGB.git`
+2. Navigate to the directory with `cd LinkPredictionOGB`
+3. Create a new conda environment `conda create --name link-pred --file conda_requirements.txt`
+4. Some OGB packages are only available on `pip` so also run `pip install -r pip_requirements.txt` 
+5. Explore with `python main.py`

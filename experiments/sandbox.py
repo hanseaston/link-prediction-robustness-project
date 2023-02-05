@@ -23,8 +23,29 @@ def main():
     dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
 
     # This generates a dictionary with train/test/val split of the edges we use
-
     split_edge = dataset.get_edge_split()
+
+    graph = dataset[0]
+    print("graph variable has type", type(graph))
+
+    # These are the edges to use in the convolutional layers
+    # They define the graph topology, and include both directions
+    edge_index = graph.edge_index               # torch.Size([2, 2135822])
+    print("edge idx variable has type", type(edge_index))
+
+    # TODO: Convert these to edge lists maybe...
+    # The training edges are used for supervsion (i.e., penalize if don't predict
+    # that they should go together)
+    training_set = split_edge['train']['edge']  # torch.Size([1067911, 2])
+    val_set = split_edge['valid']['edge']       # torch.Size([133489, 2])
+    test_set = split_edge['test']['edge']       # torch.Size([133489, 2])
+
+    print("training_set.shape, val_set.shape, test_set.shape")
+    print(training_set.shape, val_set.shape, test_set.shape)
+    print("edge_index.shape:", edge_index.shape)
+    print(training_set)
+    print(edge_index)
+
 
     # E.g., all edges used for training as a torch tensor w/ torch.Size([1067911, 2])
     training_set = split_edge['train']['edge']
@@ -73,7 +94,9 @@ def main():
     for nodes in cc:
         if len(nodes) > len(biggest_cc):
             biggest_cc = G.subgraph(nodes)
-    print(f"\tBiggest connected component", len(biggest_cc))    # Graph is composed of a single connected component (probably processed entire drugbank graph to get this)
+
+    # Graph is composed of a single connected component (probably processed entire drugbank graph to get this)
+    print(f"\tBiggest connected component", len(biggest_cc))
 
     total_degree = 0
     for node in G.nodes():
@@ -81,26 +104,24 @@ def main():
         total_degree += len(succ)
     print(f"\tAverage degree is", total_degree / len(G))
 
-    training_set = split_edge['train']['edge']  # torch.Size([1067911, 2])
-    val_set = split_edge['valid']['edge']       # torch.Size([133489, 2])
-    test_set = split_edge['test']['edge']       # torch.Size([133489, 2])
-
     import matplotlib.pyplot as plt
 
-    plt.figure(figsize=(12, 12))
-    nx.draw(G, alpha=0.3, node_size=200, width=0.5)
-    plt.savefig("results/ddi_draw.png")
-    plt.clf()
+    # NOTE: These can take a long time to run. You can see the drawings in the results folder
+    # plt.figure(figsize=(12, 12))
+    # nx.draw(G, alpha=0.3, node_size=200, width=0.5)
+    # plt.savefig("results/ddi_draw.png")
+    # plt.clf()
 
-    plt.figure(figsize=(12, 12))
-    nx.draw_spectral(G, alpha=0.3, node_size=200, width=0.5)
-    plt.savefig("results/ddi_spectral.png")
-    plt.clf()
+    # plt.figure(figsize=(12, 12))
+    # nx.draw_spectral(G, alpha=0.3, node_size=200, width=0.5)
+    # plt.savefig("results/ddi_spectral.png")
+    # plt.clf()
 
-    plt.figure(figsize=(12, 12))
-    nx.draw_shell(G, alpha=0.3, node_size=200, width=0.5)
-    plt.savefig("results/ddi_shell.png")
-    plt.clf()
+    # plt.figure(figsize=(12, 12))
+    # nx.draw_shell(G, alpha=0.3, node_size=200, width=0.5)
+    # plt.savefig("results/ddi_shell.png")
+    # plt.clf()
+
 
 
 

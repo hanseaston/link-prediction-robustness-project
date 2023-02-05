@@ -208,7 +208,7 @@ dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/') #download t
 # Hyperparameters
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 optim_wd = 0
-epochs = 500
+epochs = 5
 hidden_dim = 256
 dropout = 0.3
 num_layers = 2
@@ -265,4 +265,4 @@ torch.save({
     "emb": emb,
     "model": model,
     "link_predictor": link_predictor
-}, "model_dict.pt")
+}, "models/trained_model_files/gnn_dict.pt")

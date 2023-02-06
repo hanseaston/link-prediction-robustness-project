@@ -1,5 +1,5 @@
 # LinkPredictionOGB
-Machine Learning for Big Data Project on Link Prediction
+Machine Learning for Big Data Project on Link Prediction. [Here](project_proposal.pdf) is a link to our formal project proposal.
 
 
 ### Resources:

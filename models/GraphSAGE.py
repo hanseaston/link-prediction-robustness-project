@@ -11,6 +11,10 @@ class GraphSAGE(LinkPredictor):
         self.model = None
         self.link_predictor = None
 
+        # TODO: Do we really need this??
+        self.edge_idx = None
+        self.batch_size = -1
+
     
     def train(self, graph, val_edges=None, epochs=500, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
               node_emb_dim = 256, batch_size = 64 * 1024):
@@ -23,6 +27,7 @@ class GraphSAGE(LinkPredictor):
         num_nodes = graph.number_of_nodes()
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         optim_wd = 0
+        self.batch_size = batch_size
 
         # Convert input graph into something that can be used by PyTorch
         #   - pos_train_edge (PE x 2) tensor of edges
@@ -47,6 +52,7 @@ class GraphSAGE(LinkPredictor):
 
         pos_train_edge = torch.tensor(pos_list).to(device)
         edge_index = torch.tensor(edge_list).to(device)
+        self.edge_idx = edge_index
 
         if val_edges is not None:
             pos_val_edges = val_edges["edge"]
@@ -88,7 +94,7 @@ class GraphSAGE(LinkPredictor):
                     max_val = val_performance
                     print("=> max val =", max_val)
 
-        # TODO: Save loss info + plots
+        # TODO: This plotting would fit better in a different file. Maybe you could just save the training loss or val_hits??
         import matplotlib.pyplot as plt
         import numpy as np
         plt.title('Link Prediction on OGB-ddi using GraphSAGE GNN')
@@ -100,25 +106,57 @@ class GraphSAGE(LinkPredictor):
 
         print("Best val performance is", max_val)
 
-        return None
 
     def score_edge(self, node1, node2):
-        print("Not implemented")
-        return 0.0
+        self.model.eval()
+        self.link_predictor.eval()
+        edge_list = [[node1, node2]]
+        pred_list = self.score_edges(edge_list, batch_size=1)
+        return pred_list[0]
     
-    def save_model(self):
-        # NOTE: This assumes you're running the command from LinkPredicitonOGB directory
+
+    def score_edges(self, edge_list, batch_size=-1):
+        if batch_size != -1:
+            batch_size = self.batch_size
+        self.model.eval()
+        self.link_predictor.eval()
+
+        node_emb = self.model(self.emb, self.edge_index)
+
+        edges = torch.tensor(edge_list) # NOTE: edges need to be lists of integers
+        edges.to(self.emb.device)
+
+        preds = []
+        for perm in DataLoader(range(edges.size(0)), batch_size):
+            edge = edge[perm].t()
+            preds += [self.link_predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
+        pred = torch.cat(preds, dim=0)
+        pred_list = pred.tolist() 
+
+        return pred_list
+    
+
+    # NOTE: These assume you're running the command from LinkPredicitonOGB directory
+    def save_model(self, model_path=None):
+        if model_path is None:
+            model_path = "models/trained_model_files/gnn_dict.pt"
         torch.save({
             "emb": self.emb,
             "model": self.model,
-            "link_predictor": self.link_predictor
-        }, "models/trained_model_files/gnn_dict.pt")
+            "link_predictor": self.link_predictor,
+            "edge_idx": self.edge_idx,
+            "batch_size": self.batch_size
+        }, model_path)
     
-    def load_model(self):
-        model_dict = torch.load("models/trained_model_files/gnn_dict.pt")
+    def load_model(self, model_path=None):
+        if model_path is None:
+            model_path = "models/trained_model_files/gnn_dict.pt"
+        model_dict = torch.load(model_path)
         self.emb = model_dict["emb"]
         self.model = model_dict["model"]
         self.link_predictor = model_dict["link_predictor"]
+        self.edge_idx = model_dict["edge_idx"]
+        self.batch_size = model_dict["batch_size"]
 
 
 

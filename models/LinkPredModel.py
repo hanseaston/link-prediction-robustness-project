@@ -27,6 +27,14 @@ class LinkPredictor(ABC):
         pass
 
     @abstractmethod
+    def score_edges(self, edge_list:list) -> list:
+        """
+        Given a list of edges e.g., [[src1, target1], [src2, target2], ...], returns a list of
+        scores indicating whether that edge should be present.
+        """
+        pass
+
+    @abstractmethod
     def save_model(self, model_path=None):
         """Save relevant model details to model_path"""
         pass

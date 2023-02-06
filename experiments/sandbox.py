@@ -1,4 +1,10 @@
+# NOTE: This code lets us run Python modules from different paths ###
+import sys
 import os
+sys.path.append(os.getcwd())
+#####################################################################
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,6 +14,9 @@ from torch_geometric.utils import negative_sampling
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 import matplotlib.pyplot as plt
 import numpy as np
+
+from models.GraphSAGE import GraphSAGE
+
 
 """
 This file serves as a way of exploring the contents of OGB ddi dataset. We would like to extract
@@ -24,6 +33,10 @@ def main():
 
     # This generates a dictionary with train/test/val split of the edges we use
     split_edge = dataset.get_edge_split()
+
+    print(split_edge["train"].keys())
+    print(split_edge["valid"].keys())   # NOTE: validation includes negative edges
+    print(split_edge["test"].keys())    # NOTE: validation includes negative edges
 
     graph = dataset[0]
     print("graph variable has type", type(graph))
@@ -122,6 +135,22 @@ def main():
     # plt.savefig("results/ddi_shell.png")
     # plt.clf()
 
+
+    # Initialize, train, and save GraphSAGE model
+    print("=> Initializing GraphSAGE model...")
+    model = GraphSAGE()
+
+    print("=> Training model")
+    model.train(graph=G, val_edges=split_edge["valid"], epochs=1)
+    # NOTE: Should get loss curve like this
+    # Epoch 1: loss: 1.38429
+    # Epoch 2: loss: 1.17821
+    # Epoch 3: loss: 0.95868
+    # Epoch 4: loss: 0.84103
+    # Epoch 5: loss: 0.75019
+
+    print("=> Saving model...")
+    model.save_model()
 
 
 

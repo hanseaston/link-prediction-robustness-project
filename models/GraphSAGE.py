@@ -1,6 +1,6 @@
-from models import LinkPredModel
+from models.LinkPredModel import LinkPredictor
 
-class GraphSAGE(LinkPredModel):
+class GraphSAGE(LinkPredictor):
 
     def __init__(self) -> None:
         super().__init__()
@@ -12,29 +12,52 @@ class GraphSAGE(LinkPredModel):
         self.link_predictor = None
 
     
-    def train(self, graph, num_nodes, validation_set=None, epochs=500, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
+    def train(self, graph, val_edges=None, epochs=500, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
               node_emb_dim = 256, batch_size = 64 * 1024):
+        """
+        Trains the GNN model
+        graph: networkx graph of training data
+        val_edges: dictionary with positive edges on `edge` and negative edges at `neg_edge`
+        """
         
-        # TODO: Convert input graph into something that can be used by PyTorch
-        dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/') # download the dataset
-
-
+        num_nodes = graph.number_of_nodes()
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         optim_wd = 0
 
+        # Convert input graph into something that can be used by PyTorch
+        #   - pos_train_edge (PE x 2) tensor of edges
+        #   - edge_idx (2 x E) tensor of edges
 
-        split_edge = dataset.get_edge_split()
-        pos_train_edge = split_edge['train']['edge'].to(device)
+        pos_list = []
+        edge_list = [[], []]
+        seen_nodes = set()
 
-        graph = dataset[0]
-        edge_index = graph.edge_index.to(device)
+        for node, nbr_dict in graph.adjacency():
+            seen_nodes.add(node)
+            for n in nbr_dict.keys():
+                if n not in seen_nodes:
+                    pos_list.append([node, n])
+                edge_list[0].append(int(node))
+                edge_list[0].append(int(n))
+                edge_list[1].append(int(n))
+                edge_list[1].append(int(node))
 
-        # NOTE: edge_index can be recovered from pos_train_edge
+        # pos_train_edge = torch.tensor(pos_list, dtype=torch.uint8).to(device)
+        # edge_index = torch.tensor(edge_list, dtype=torch.uint8).to(device)
+
+        pos_train_edge = torch.tensor(pos_list).to(device)
+        edge_index = torch.tensor(edge_list).to(device)
+
+        if val_edges is not None:
+            pos_val_edges = val_edges["edge"]
+            neg_val_edges = val_edges["edge_neg"]
+            # val_edges = torch.Tensor(val_edges).to(device)
+
 
         evaluator = Evaluator(name='ogbl-ddi')
 
         # Node embeddings that must be learned
-        self.emb = torch.nn.Embedding(graph.num_nodes, node_emb_dim).to(device)
+        self.emb = torch.nn.Embedding(num_nodes, node_emb_dim).to(device)
         # GNN uses message passing to aggregate node embeddings
         self.model = GNNStack(node_emb_dim, hidden_dim, hidden_dim, num_layers, dropout, emb=True).to(device)
         # MLP that takes embeddings of a pair of nodes and predicts whether there is an edge
@@ -48,27 +71,54 @@ class GraphSAGE(LinkPredModel):
 
         train_loss = []
         val_hits = []
-        # test_hits = []
+        max_val = -1
         for e in range(epochs):
             loss = train(self.model, self.link_predictor, self.emb.weight, edge_index, pos_train_edge, batch_size, optimizer)
             print(f"Epoch {e + 1}: loss: {round(loss, 5)}")
             train_loss.append(loss)
 
-            if (e+1)%10 ==0:
-                result = test(self.model, self.link_predictor, self.emb.weight, edge_index, split_edge, batch_size, evaluator)
-                val_hits.append(result['Hits@20'][0])
-                # test_hits.append(result['Hits@20'][1]) # NOTE: Should not access this until ready for final eval
-                print(result)
+            if val_edges is not None:
+                result = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
+                val_performance = result['Hits@20']
+                val_hits.append(val_performance)
+                if (e+1)%10 ==0:
+                    print(result)
+                if val_performance > max_val:
+                    self.save_model()
+                    max_val = val_performance
+                    print("=> max val =", max_val)
 
         # TODO: Save loss info + plots
+        import matplotlib.pyplot as plt
+        import numpy as np
+        plt.title('Link Prediction on OGB-ddi using GraphSAGE GNN')
+        plt.plot(train_loss,label="training loss")
+        plt.plot(np.arange(len(val_hits)),val_hits,label="Hits@20 on validation")
+        plt.xlabel('Epochs')
+        plt.legend()
+        plt.savefig("training_link_pred.png")
+
+        print("Best val performance is", max_val)
 
         return None
 
     def score_edge(self, node1, node2):
+        print("Not implemented")
         return 0.0
     
+    def save_model(self):
+        # NOTE: This assumes you're running the command from LinkPredicitonOGB directory
+        torch.save({
+            "emb": self.emb,
+            "model": self.model,
+            "link_predictor": self.link_predictor
+        }, "models/trained_model_files/gnn_dict.pt")
+    
     def load_model(self):
-        return None
+        model_dict = torch.load("models/trained_model_files/gnn_dict.pt")
+        self.emb = model_dict["emb"]
+        self.model = model_dict["model"]
+        self.link_predictor = model_dict["link_predictor"]
 
 
 
@@ -84,7 +134,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.utils import negative_sampling
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 
-# Implementation largely copied from this repository:
+# Implementation largely taken from this repository:
 # https://github.com/samar-khanna/cs224w-project
 
 class GNNStack(torch.nn.Module):
@@ -111,7 +161,7 @@ class GNNStack(torch.nn.Module):
 
     def forward(self, x, edge_index):
         """
-        Applies this modules graph convolutions to the given data
+        Applies this module's graph convolutions to the given data
             x: Node embeddings
             edge_index: Edges to use in convolutional layers
         """
@@ -210,15 +260,15 @@ def train(model, link_predictor, emb, edge_index, pos_train_edge, batch_size, op
     return sum(train_losses) / len(train_losses)
 
 
-
-def test(model, predictor, emb, edge_index, split_edge, batch_size, evaluator):
+# TODO: This might be able to evaluate any method...
+def test(model, predictor, emb, edge_index, pos_edge, neg_edge, batch_size, evaluator):
     """
     Evaluates graph model on validation and test edges
     :param model: Torch Graph model used for updating node embeddings based on message passing
     :param predictor: Torch model used for predicting whether edge exists or not
     :param emb: (N, d) Initial node embeddings for all N nodes in graph
     :param edge_index: (2, E) Edge index for all edges in the graph
-    :param split_edge: Dictionary of (e, 2) edges for val pos/neg and test pos/neg edges
+    :param pos_edge: Tensor of (e, 2) edges for testing
     :param batch_size: Number of positive (and negative) supervision edges to sample per batch
     :param evaluator: OGB evaluator to calculate hits @ k metric
     :return: hits @ k results
@@ -228,48 +278,31 @@ def test(model, predictor, emb, edge_index, split_edge, batch_size, evaluator):
 
     node_emb = model(emb, edge_index)
 
-    pos_valid_edge = split_edge['valid']['edge'].to(emb.device)
-    neg_valid_edge = split_edge['valid']['edge_neg'].to(emb.device)
-    pos_test_edge = split_edge['test']['edge'].to(emb.device)
-    neg_test_edge = split_edge['test']['edge_neg'].to(emb.device)
+    pos_edge.to(emb.device)
+    neg_edge.to(emb.device)
 
-    pos_valid_preds = []
-    for perm in DataLoader(range(pos_valid_edge.size(0)), batch_size):
-        edge = pos_valid_edge[perm].t()
-        pos_valid_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
-    pos_valid_pred = torch.cat(pos_valid_preds, dim=0)
+    pos_preds = []
+    for perm in DataLoader(range(pos_edge.size(0)), batch_size):
+        edge = pos_edge[perm].t()
+        pos_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
+    pos_pred = torch.cat(pos_preds, dim=0)
 
-    neg_valid_preds = []
-    for perm in DataLoader(range(neg_valid_edge.size(0)), batch_size):
-        edge = neg_valid_edge[perm].t()
-        neg_valid_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
-    neg_valid_pred = torch.cat(neg_valid_preds, dim=0)
+    neg_preds = []
+    for perm in DataLoader(range(neg_edge.size(0)), batch_size):
+        edge = neg_edge[perm].t()
+        neg_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
+    neg_pred = torch.cat(neg_preds, dim=0)
 
-    pos_test_preds = []
-    for perm in DataLoader(range(pos_test_edge.size(0)), batch_size):
-        edge = pos_test_edge[perm].t()
-        pos_test_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
-    pos_test_pred = torch.cat(pos_test_preds, dim=0)
-
-    neg_test_preds = []
-    for perm in DataLoader(range(neg_test_edge.size(0)), batch_size):
-        edge = neg_test_edge[perm].t()
-        neg_test_preds += [predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
-    neg_test_pred = torch.cat(neg_test_preds, dim=0)
 
     results = {}
     for K in [20, 50, 100]:
         evaluator.K = K
-        valid_hits = evaluator.eval({
-            'y_pred_pos': pos_valid_pred,
-            'y_pred_neg': neg_valid_pred,
-        })[f'hits@{K}']
-        test_hits = evaluator.eval({
-            'y_pred_pos': pos_test_pred,
-            'y_pred_neg': neg_test_pred,
+        hits = evaluator.eval({
+            'y_pred_pos': pos_pred,
+            'y_pred_neg': neg_pred,
         })[f'hits@{K}']
 
-        results[f'Hits@{K}'] = (valid_hits, test_hits)
+        results[f'Hits@{K}'] = hits
 
     return results
 

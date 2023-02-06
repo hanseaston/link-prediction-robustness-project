@@ -196,6 +196,7 @@ def test(model, predictor, emb, edge_index, split_edge, batch_size, evaluator):
             'y_pred_neg': neg_test_pred,
         })[f'hits@{K}']
 
+
         results[f'Hits@{K}'] = (valid_hits, test_hits)
 
     return results
@@ -244,7 +245,7 @@ for e in range(epochs):
     print(f"Epoch {e + 1}: loss: {round(loss, 5)}")
     train_loss.append(loss)
 
-    if (e+1)%10 ==0:
+    if e%10 == 0:
         result = test(model, link_predictor, emb.weight, edge_index, split_edge, batch_size, evaluator)
         val_hits.append(result['Hits@20'][0])
         test_hits.append(result['Hits@20'][1])

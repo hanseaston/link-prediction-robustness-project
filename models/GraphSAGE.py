@@ -1,4 +1,5 @@
 from models.LinkPredModel import LinkPredictor
+import numpy as np
 
 class GraphSAGE(LinkPredictor):
 
@@ -46,9 +47,6 @@ class GraphSAGE(LinkPredictor):
                 edge_list[0].append(int(n))
                 edge_list[1].append(int(n))
                 edge_list[1].append(int(node))
-
-        # pos_train_edge = torch.tensor(pos_list, dtype=torch.uint8).to(device)
-        # edge_index = torch.tensor(edge_list, dtype=torch.uint8).to(device)
 
         pos_train_edge = torch.tensor(pos_list).to(device)
         edge_index = torch.tensor(edge_list).to(device)
@@ -116,22 +114,22 @@ class GraphSAGE(LinkPredictor):
     
 
     def score_edges(self, edge_list, batch_size=-1):
-        if batch_size != -1:
+        if batch_size == -1:
             batch_size = self.batch_size
         self.model.eval()
         self.link_predictor.eval()
 
-        node_emb = self.model(self.emb, self.edge_index)
+        node_emb = self.model(self.emb.weight, self.edge_idx)
 
         edges = torch.tensor(edge_list) # NOTE: edges need to be lists of integers
-        edges.to(self.emb.device)
+        edges.to(self.emb.weight.device)    # Put edges on the same device
 
         preds = []
         for perm in DataLoader(range(edges.size(0)), batch_size):
-            edge = edge[perm].t()
+            edge = edges[perm].t()
             preds += [self.link_predictor(node_emb[edge[0]], node_emb[edge[1]]).squeeze().cpu()]
         pred = torch.cat(preds, dim=0)
-        pred_list = pred.tolist() 
+        pred_list = pred.detach().cpu().numpy() 
 
         return pred_list
     

@@ -4,6 +4,7 @@ Abstract class definition for our link prediction models.
 
 from abc import ABC, abstractmethod     # Abstract Base Class
 
+
 class LinkPredictor(ABC):
     
     def __init__(self) -> None:
@@ -27,10 +28,10 @@ class LinkPredictor(ABC):
         pass
 
     @abstractmethod
-    def score_edges(self, edge_list:list) -> list:
+    def score_edges(self, edge_list:list):
         """
-        Given a list of edges e.g., [[src1, target1], [src2, target2], ...], returns a list of
-        scores indicating whether that edge should be present.
+        Given a list of edges e.g., [[src1, target1], [src2, target2], ...], returns a numpy array
+        of scores indicating whether that edge should be present.
         """
         pass
 

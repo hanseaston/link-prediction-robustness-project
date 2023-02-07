@@ -18,7 +18,7 @@ Machine Learning for Big Data Project on Link Prediction. [Here](project_proposa
 ### Setup Instructions:
 1. Clone the repo onto your machine with `git clone https://github.com/hanseaston/LinkPredictionOGB.git`
 2. Navigate to the directory with `cd LinkPredictionOGB`
-3. Create a new conda environment `conda create --name link-pred --file envirronment.yml`
+3. Create a new conda environment `conda env create --name link-pred --file environment.yml`
 4. Explore with `python main.py`
 
 

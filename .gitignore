@@ -1,4 +1,5 @@
 processed/*
 *.csv
 *.pt
-models/__pycache__*
+*.pyc
+dataset/__pycache__/

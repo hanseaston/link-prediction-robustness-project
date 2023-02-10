@@ -28,7 +28,7 @@ class LinkPredictor(ABC):
         pass
 
     @abstractmethod
-    def score_edges(self, edge_list:list):
+    def score_edges(self, edge_list:list) -> list:
         """
         Given a list of edges e.g., [[src1, target1], [src2, target2], ...], returns a numpy array
         of scores indicating whether that edge should be present.

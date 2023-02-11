@@ -17,7 +17,7 @@ This is an example of the methods we'll call on each model
 def main():
     start = time.time()
 
-    train_test()
+    #train_test()
     load_test()
 
     end = time.time()
@@ -42,7 +42,7 @@ def train_test():
     model.train(graph=G)
 
     print("=> Saving model...")
-    model.save_model()
+    model.save_model(model_path = "models/trained_model_files/latent_factor_model")
 
 
 
@@ -53,14 +53,14 @@ def load_test():
     print("=> Preparing dataset...")
     dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
     split_edge = dataset.get_edge_split()
-    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
+    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv.gz", names=["source", "target"])
     G = nx.from_pandas_edgelist(df)
 
     print("=> Initializing GraphSAGE model...")
-    model = GraphSAGE()
+    model = MatrixFactorization()
 
     print("=> Loading model")
-    model.load_model(model_path="models/trained_model_files/_gnn_dict_ep330.pt")
+    model.load_model(model_path = "models/trained_model_files/latent_factor_model.npz")
     
     print("=> Testing model")
     pos_preds = model.score_edges(split_edge["valid"]["edge"].tolist())

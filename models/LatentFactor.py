@@ -17,7 +17,6 @@ class MatrixFactorization(LinkPredictor):
         super().__init__()
         self.Q = None
         self.P_T = None
-        self.out_file = "models/trained_model_files/latent_factor_model"
         
 
     def train(self, graph:list, **kwargs:dict) -> None:
@@ -30,15 +29,23 @@ class MatrixFactorization(LinkPredictor):
 
     
     def score_edge(self, node1:int, node2:int) -> float:
-        pass
+        """
+        calculating score using dotproduct of Q_r and P_T_i as shown in slide 20 of rec_sys2 lecture
+        """
+        return np.dot(self.Q[node1], self.P_T[node2])
 
-    def score_edges(self, node1:int, node2:int) -> float:
-        pass
+    def score_edges(self, edge_list:list) -> np.ndarray:
+        res = np.zeros(len(edge_list))
+        for index, edge in enumerate(edge_list):
+            node1, node2 = edge
+            res[index] = self.score_edge(node1, node2)
+        return res
+
 
     def save_model(self, model_path=None):
-        np.savez(self.out_file, self.Q, self.P_T)
+        np.savez(model_path, self.Q, self.P_T)
     
     def load_model(self, model_path=None):
-        npz = np.load(self.out_file)
+        npz = np.load(model_path)
         self.Q = npz['arr_0']
         self.P_T = npz['arr_0']

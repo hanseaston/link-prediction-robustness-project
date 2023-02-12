@@ -1,22 +1,23 @@
+# NOTE: This code lets us run Python modules from different paths ###
 import sys
 import os
 sys.path.append(os.getcwd())
 #####################################################################
 
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from models.Neighborhood import JaccardSimilarity
+from models.LatentFactor import MatrixFactorization
 import pandas as pd
 import networkx as nx
 import time
 
 """
-Sandbox for Jaccard algorithm link prediction
+This is an example of the methods we'll call on each model
 """
 
 def main():
     start = time.time()
 
-    # train_test()
+    #train_test()
     load_test()
 
     end = time.time()
@@ -29,18 +30,19 @@ def train_test():
     """
     print("=> Preparing dataset...")
     dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
-    # TODO figure out whether that is the correct dataset to load
-    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
+    split_edge = dataset.get_edge_split()
+    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv.gz", names=["source", "target"])
     G = nx.from_pandas_edgelist(df)
 
-    print("=> Initializing Jaccard model...")
-    model = JaccardSimilarity()
+    print("=> Initializing Factorization Model model...")
+    model = MatrixFactorization()
 
     print("=> Training model")
-    model.train(G)
+    # no need to use epochs or validation set 
+    model.train(graph=G)
 
     print("=> Saving model...")
-    model.save_model()
+    model.save_model(model_path = "models/trained_model_files/latent_factor_model")
 
 
 
@@ -51,14 +53,14 @@ def load_test():
     print("=> Preparing dataset...")
     dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
     split_edge = dataset.get_edge_split()
-    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
+    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv.gz", names=["source", "target"])
     G = nx.from_pandas_edgelist(df)
 
-    print("=> Initializing Jaccard model...")
-    model = JaccardSimilarity()
+    print("=> Initializing GraphSAGE model...")
+    model = MatrixFactorization()
 
     print("=> Loading model")
-    model.load_model(model_path="models/trained_model_files/_gnn_dict_ep330.pt") # TODO: change this
+    model.load_model(model_path = "models/trained_model_files/latent_factor_model.npz")
     
     print("=> Testing model")
     pos_preds = model.score_edges(split_edge["valid"]["edge"].tolist())
@@ -76,6 +78,9 @@ def load_test():
         results[f'Hits@{K}'] = hits
     print("\t Model achieves:")
     print("\t", results)
+
+
+
 
 
 if __name__ == "__main__":

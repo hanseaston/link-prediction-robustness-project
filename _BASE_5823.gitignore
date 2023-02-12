@@ -1,0 +1,5 @@
+processed/*
+*.csv
+*.pt
+*.pyc
+dataset/__pycache__/

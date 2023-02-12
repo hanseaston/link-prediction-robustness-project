@@ -16,9 +16,9 @@ class Node2Vec(LinkPredictor):
 
         self.embeddings = None
 
-    def train(self, graph, dimensions=64, walk_length=30, num_walks=200, workers=4) -> None:
+    def train(self, graph, dimensions=64, walk_length=30, num_walks=20, workers=4, temp="models/tmp") -> None:
         # NOTE: Not deterministic if workers != 1
-        node2vec = n2v(graph, dimensions=dimensions, walk_length=walk_length, num_walks=num_walks, workers=workers)
+        node2vec = n2v(graph, dimensions=dimensions, walk_length=walk_length, num_walks=num_walks, workers=workers, temp_folder=temp)
 
         # This is a genism model
         model = node2vec.fit(window=10, min_count=1, batch_words=4)

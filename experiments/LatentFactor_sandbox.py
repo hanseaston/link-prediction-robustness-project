@@ -66,6 +66,7 @@ def load_test():
     pos_preds = model.score_edges(split_edge["valid"]["edge"].tolist())
     neg_preds = model.score_edges(split_edge["valid"]["edge_neg"].tolist())
 
+
     evaluator = Evaluator(name='ogbl-ddi')
     results = {}
     for K in [20, 50, 100]:

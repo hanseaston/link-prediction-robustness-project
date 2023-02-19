@@ -1,0 +1,3 @@
+[submodule "SEAL_OGB"]
+	path = models/SEAL_OGB
+	url = https://https://github.com/Pban97/SEAL_OGB

@@ -116,23 +116,24 @@ def load_perturb_test():
     # NOTE: Pretty slow...
     #       - let's create a bunch of these and save them all
     proportions = [0.01, 0.1, 0.25]
+
+
+
     graph_dict = {}
     for prop in proportions:
         print(f"\tPerturbing data by {(prop * 100):2f}%")
         print("\t Before:\t", graph.number_of_edges())
-        graph_dict[prop] = perturb_data(graph, proportion=prop)
+        graph_dict[prop] = perturb_data(graph, proportion=prop, edges=split_dict)
         print("\t After:\t", graph.number_of_edges())
 
     # TODO: Train methods on these graphs...
 
     
-    
-
 
 
 
 
 
 if __name__ == "__main__":
-    main()
+    load_perturb_test()
 

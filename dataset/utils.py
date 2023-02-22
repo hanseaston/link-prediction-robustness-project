@@ -3,7 +3,7 @@ import random
 from ogb.linkproppred import PygLinkPropPredDataset
 import pandas as pd
 
-def perturb_data(graph, method="random", seed=123, proportion=0.1, ):
+def perturb_data(graph, edges, method="random", seed=123, proportion=0.1):
     """
     Given a networkx graph, returns new version of the graph with edges removed according to the
     given method. Proportion indicates the proportion of edges that are perturbed.
@@ -14,17 +14,31 @@ def perturb_data(graph, method="random", seed=123, proportion=0.1, ):
     random.seed(seed)
     graph_copy = graph.copy(as_view=False)
 
-    if method == "random":
-        num_edges = graph.number_of_edges()
-        num_removed = int(proportion * num_edges)
-        idxs = random.sample(range(num_edges), num_removed)
 
-        ebunch = [e for i, e in enumerate(graph.edges) if i in idxs]
-        graph_copy.remove_edges_from(ebunch)
-    else:
-        raise Exception(f"{method} is not a supported method for edge removal.")
+    match method:
+        case "random_removal":
+            return random_removal(graph_copy, edges, proportion)
+        case "random_add":
+            return random_add(graph_copy, edges, proportion)
+        case "random_swap":
+            return random_swap(graph_copy, edges, proportion)
 
-    return graph_copy
+        case _:
+            raise Exception(f"{method} is not a supported method for edge removal.")
+
+
+def random_removal(graph, edges, proportion):
+    num_edges = graph.number_of_edges()
+    num_removed = int(proportion * num_edges)
+    idxs = random.sample(range(num_edges), num_removed)
+    ebunch = [e for i, e in enumerate(graph.edges) if i in idxs]
+    graph.remove_edges_from(ebunch)
+
+def random_add(graph, edges, proportion):
+    pass
+
+def random_swap(graph, edges, proportion):
+    pass
 
 
 def load_data(test_as_tensor=False):
@@ -43,6 +57,9 @@ def load_data(test_as_tensor=False):
 
     if not test_as_tensor:
         split_dict = {
+            "train": {
+                "edge": split_edge["train"]["edge"].tolist(),
+            },
             "valid": {
                 "edge": split_edge["valid"]["edge"].tolist(),
                 "edge_neg": split_edge["valid"]["edge_neg"].tolist()
@@ -54,6 +71,9 @@ def load_data(test_as_tensor=False):
         }
     else:
         split_dict = {
+            "train": {
+                "edge": split_edge["train"]["edge"],
+            },
             "valid": {
                 "edge": split_edge["valid"]["edge"],
                 "edge_neg": split_edge["valid"]["edge_neg"]

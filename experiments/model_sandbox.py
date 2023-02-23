@@ -6,7 +6,8 @@ sys.path.append(os.getcwd())
 
 
 from models.GraphSAGE import GraphSAGE
-from models.RandomWalk import Node2Vec
+# from models.RandomWalk import Node2Vec
+from models.node_to_vec import NodeToVec
 
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 import pandas as pd
@@ -50,8 +51,8 @@ def train_test():
     # print("=> Saving model...")
     # model.save_model()
 
-    print("=> Initializing Node2Vec model...")
-    model = Node2Vec()
+    print("=> Initializing NodeToVec model...")
+    model = NodeToVec()
     print("=> Training model")
     model.train(graph=G)
     print("=> Saving model...")
@@ -77,8 +78,8 @@ def load_test():
     # print("=> Loading model")
     # model.load_model(model_path="models/trained_model_files/_gnn_dict_ep330.pt")
 
-    print("=> Initializing GraphSAGE model...")
-    model = Node2Vec()
+    print("=> Initializing NodeToVec model...")
+    model = NodeToVec()
     print("=> Loading model")
     model.load_model()
 
@@ -116,24 +117,25 @@ def load_perturb_test():
     # NOTE: Pretty slow...
     #       - let's create a bunch of these and save them all
     proportions = [0.01, 0.1, 0.25]
-
-
-
     graph_dict = {}
     for prop in proportions:
         print(f"\tPerturbing data by {(prop * 100):2f}%")
         print("\t Before:\t", graph.number_of_edges())
-        graph_dict[prop] = perturb_data(graph, proportion=prop, edges=split_dict)
+        graph_dict[prop] = perturb_data(graph, proportion=prop)
         print("\t After:\t", graph.number_of_edges())
 
     # TODO: Train methods on these graphs...
 
+    
     
 
 
 
 
 
+
 if __name__ == "__main__":
-    load_perturb_test()
+    main()
+
+
 

@@ -8,12 +8,10 @@ def perturb_data(graph, edges, method="random", seed=123, proportion=0.1):
     Given a networkx graph, returns new version of the graph with edges removed according to the
     given method. Proportion indicates the proportion of edges that are perturbed.
 
-    NOTE: This method will mutate your original graph...?
     """
 
     random.seed(seed)
     graph_copy = graph.copy(as_view=False)
-
 
     match method:
         case "random_removal":

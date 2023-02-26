@@ -9,8 +9,9 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import time
+from dataset.utils import load_data
 
-TRAIN = False
+TRAIN = True
 
 """
 Sandbox for Jaccard algorithm link prediction
@@ -20,7 +21,8 @@ def main():
     start = time.time()
 
     if TRAIN:
-        train_test()
+        CSV_path = "perturbation/random_remove_0.25.csv"
+        train_test(CSV_path)
     else:
         load_test()
 
@@ -28,14 +30,13 @@ def main():
     print(f"Script took {round((end - start) / 60, 2)} minutes to run")
 
 
-def train_test():
+def train_test(CSV_path):
     """
     Trains and saves model using abstract class methods
     """
     print("=> Preparing dataset...")
     PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
-    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
-    G = nx.from_pandas_edgelist(df)
+    G, _ = load_data(perturbation_path=CSV_path)
 
     print("=> Initializing Jaccard model...")
     model = JaccardSimilarity()

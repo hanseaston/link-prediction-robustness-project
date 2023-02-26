@@ -105,35 +105,6 @@ def load_test():
     # Validation set results:
     # GNN achieves: {'Hits@20': 0.6120878873914705, 'Hits@50': 0.6636501884050371, 'Hits@100': 0.6919970933934632}
 
-
-def load_perturb_test():
-    """
-    Loads the data from dataset.utils.load_data() and tests the models performance on a
-    perturbed dataset.
-    """
-
-    graph, split_dict = load_data()
-    
-    # NOTE: Pretty slow...
-    #       - let's create a bunch of these and save them all
-    proportions = [0.01, 0.1, 0.25]
-    graph_dict = {}
-    for prop in proportions:
-        print(f"\tPerturbing data by {(prop * 100):2f}%")
-        print("\t Before:\t", graph.number_of_edges())
-        graph_dict[prop] = perturb_data(graph, proportion=prop)
-        print("\t After:\t", graph.number_of_edges())
-
-    # TODO: Train methods on these graphs...
-
-    
-    
-
-
-
-
-
-
 if __name__ == "__main__":
     main()
 

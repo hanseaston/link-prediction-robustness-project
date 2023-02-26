@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from models.GraphSAGE import GraphSAGE
 # from models.RandomWalk import Node2Vec
-from models.node_to_vec import NodeToVec
+from models.NodeToVec import NodeToVec
 
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 import pandas as pd

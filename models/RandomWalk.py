@@ -1,14 +1,12 @@
 import networkx as nx
-from node2vec import Node2Vec as n2v
 from models.LinkPredModel import LinkPredictor
-from gensim.models import KeyedVectors
-from numpy.linalg import norm
+from nodevectors import Node2Vec as N2V
 
 
 class Node2Vec(LinkPredictor):
     """
     LinkPredModel wrapper around implementation of node2vec from this repo
-    https://github.com/eliorc/node2vec
+    https://github.com/VHRanger/nodevectors
     """
 
     def __init__(self) -> None:
@@ -16,15 +14,12 @@ class Node2Vec(LinkPredictor):
 
         self.embeddings = None
 
-    def train(self, graph, dimensions=64, walk_length=30, num_walks=20, workers=4, temp="models/tmp") -> None:
-        # NOTE: Not deterministic if workers != 1
-        node2vec = n2v(graph, dimensions=dimensions, walk_length=walk_length, num_walks=num_walks, workers=workers, temp_folder=temp)
+    def train(self, graph, dimensions=64, walk_length=30, num_walks=20) -> None:
+        # Fit embedding model to graph
+        g2v = N2V(n_components=dimensions, walklen=walk_length)
+        g2v.fit(graph)
 
-        # This is a genism model
-        model = node2vec.fit(window=10, min_count=1, batch_words=4)
-
-        # Keyed dictionary of embeddings as numpy vectors
-        self.embeddings = model.wv
+        # Learn linear regression on top of embeddings.
 
     
     def score_edge(self, node1:int, node2:int) -> float:

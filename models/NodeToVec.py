@@ -73,9 +73,13 @@ class NodeToVec(LinkPredictor):
 
 
     def save_model(self, model_path=""):
+        if len(model_path) == 0:
+            model_path = "models/trained_model_files"
         pickle.dump(self.link_pred_clf, open(os.path.join(model_path, "clf.sav"), 'wb'))
         self.embedding.save(os.path.join(model_path, "embedding.model"))
 
     def load_model(self, model_path=""):
+        if len(model_path) == 0:
+            model_path = "models/trained_model_files"
         self.link_pred_clf = pickle.load(open(os.path.join(model_path, "clf.sav"), 'rb'))
         self.embedding = Word2Vec.load(os.path.join(model_path, "embedding.model"))

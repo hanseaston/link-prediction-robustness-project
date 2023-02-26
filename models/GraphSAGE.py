@@ -53,6 +53,7 @@ class GraphSAGE(LinkPredictor):
         self.edge_idx = edge_index
 
         if val_edges is not None:
+            # TODO: Need to convert these to a tensor
             pos_val_edges = val_edges["edge"]
             neg_val_edges = val_edges["edge_neg"]
             # val_edges = torch.Tensor(val_edges).to(device)

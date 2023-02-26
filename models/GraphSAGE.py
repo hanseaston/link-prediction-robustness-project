@@ -11,8 +11,6 @@ class GraphSAGE(LinkPredictor):
         self.emb = None
         self.model = None
         self.link_predictor = None
-
-        # TODO: Do we really need this??
         self.edge_idx = None
         self.batch_size = -1
 
@@ -53,7 +51,7 @@ class GraphSAGE(LinkPredictor):
         self.edge_idx = edge_index
 
         if val_edges is not None:
-            # TODO: Need to convert these to a tensor
+            # TODO: Need to convert these to a tensor?
             pos_val_edges = val_edges["edge"]
             neg_val_edges = val_edges["edge_neg"]
             # val_edges = torch.Tensor(val_edges).to(device)
@@ -296,8 +294,6 @@ def train(model, link_predictor, emb, edge_index, pos_train_edge, batch_size, op
         train_losses.append(loss.item())
     return sum(train_losses) / len(train_losses)
 
-
-# TODO: This might be able to evaluate any method...
 def test(model, predictor, emb, edge_index, pos_edge, neg_edge, batch_size, evaluator):
     """
     Evaluates graph model on validation and test edges

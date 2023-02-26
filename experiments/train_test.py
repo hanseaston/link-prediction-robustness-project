@@ -3,7 +3,7 @@ import os
 sys.path.append(os.getcwd())
 #####################################################################
 
-from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
+from ogb.linkproppred import Evaluator
 from models.GraphSAGE import GraphSAGE
 import pandas as pd
 import numpy as np
@@ -12,19 +12,16 @@ import networkx as nx
 from dataset.utils import load_data
 import time
 
-TRAIN = False
 
 """
-Sandbox for GraphSAGE link prediction
+General method that should be able to train any link prediction model
 """
 
 def main():
     start = time.time()
 
-    if TRAIN:
-        train()
-    else:
-        load_test()
+    train()
+    load_test()
 
     end = time.time()
 
@@ -107,4 +104,3 @@ def load_test():
 
 if __name__ == "__main__":
     main()
-

@@ -168,8 +168,10 @@ def get_existing_edges(train, valid, test):
 
 if __name__ == "__main__":
     
-    perturbation_amount = 1
+    perturbation_amount = 100
+    # option: random_add(% of edges added), random_remove(% of edges removed), random_swap(num_of_edges_to_swap)
     perturb_data(method="random_swap", perturbation_amount=perturbation_amount)
+
 
     # Comment this out to know how many edges exist in train, test, and valid, along with some other info
     # graph, split_dict = load_data()

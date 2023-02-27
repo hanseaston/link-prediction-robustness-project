@@ -4,6 +4,7 @@ import pandas as pd
 import csv
 import torch
 
+NUM_NODES = 4267
 
 def load_data(test_as_tensor=False, perturbation_path=None):
     """
@@ -12,14 +13,23 @@ def load_data(test_as_tensor=False, perturbation_path=None):
 
     If test_as_tensor=True, returns the val/test split as tensor instead of edge list
     """
+    dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
+
     if perturbation_path is None:
-        dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
         df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
         G = nx.from_pandas_edgelist(df)
     else:
-        dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
         df = pd.read_csv(perturbation_path, names=["source", "target"])
         G = nx.from_pandas_edgelist(df)
+
+    # TODO: This is not a great final solution. When applying link prediction to graphs, we
+    #       don't consider nodes with no neighbors at all
+    # Add back all nodes that were disconnected during perturbation
+    for node in range(NUM_NODES):
+        if not G.has_node(node):
+            print(node, "not in graph")
+            G.add_node(node)
+        
 
     split_edge = dataset.get_edge_split()
 

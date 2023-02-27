@@ -80,11 +80,20 @@ class CommonNeighbor(LinkPredictor):
         return scores
 
     def save_model(self, model_path=None):
-        with open("pickle/commonneighbor.pickle", 'wb') as handle:
+        if model_path is None:
+            model_path = "pickle/commonneighbor.pickle"
+        else:
+            model_path += "commonneighbor.pickle"
+        with open(model_path, 'wb') as handle:
             pickle.dump(self.predictions, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     def load_model(self, model_path=None):
-        with open("pickle/commonneighbor.pickle", 'rb') as handle:
+        if model_path is None:
+            model_path = "pickle/commonneighbor.pickle"
+        else:
+            model_path += "commonneighbor.pickle"
+        
+        with open(model_path, 'rb') as handle:
             self.predictions = pickle.load(handle)
 
 
@@ -119,9 +128,71 @@ class AdamicAdar(LinkPredictor):
         return scores
 
     def save_model(self, model_path=None):
-        with open("pickle/adamicadar.pickle", 'wb') as handle:
+        if model_path is None:
+            model_path = "pickle/adamicadar.pickle"
+        else:
+            model_path += "adamicadar.pickle"
+
+        with open(model_path, 'wb') as handle:
             pickle.dump(self.predictions, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     def load_model(self, model_path=None):
-        with open("pickle/adamicadar.pickle", 'rb') as handle:
+        if model_path is None:
+            model_path = "pickle/adamicadar.pickle"
+        else:
+            model_path += "adamicadar.pickle"
+        
+        with open(model_path, 'rb') as handle:
             self.predictions = pickle.load(handle)
+
+
+class RuntimeCN(LinkPredictor):
+    """
+    Stores graph as list of [0,1] vectors.
+    Hamming distance (i.e. dot prod) between vectors gives number of common neighbors.
+    Call it Runtime Common Neighbors because it computes predictions on the fly rather than
+    saving them in the model.
+    --> Testing to see if this is faster than the other methods
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def train(self, graph, **kwargs:dict) -> None:
+        self.adj_mat = nx.to_scipy_sparse_array(graph, nodelist=range(graph.number_of_nodes()), format="csr")
+
+        # TODO: Testing that all degrees line up
+        for n in graph:
+            deg = len(list(graph[n]))
+            sparse_deg = self.adj_mat.getrow(n).getnnz()
+            if deg != sparse_deg:
+                print(n, deg, sparse_deg)
+
+        print(self.adj_mat.shape)
+    
+    def score_edge(self, node1:int, node2:int) -> float:
+        return self.adj_mat.getrow(node1).dot(self.adj_mat.getrow(node2).T)
+    
+    def score_edges(self, edge_list:list):
+        scores = []
+        for node1, node2 in edge_list:
+            scores.append(self.score_edge(node1, node2))
+        return scores
+
+    def save_model(self, model_path=None):
+        if model_path is None:
+            model_path = "pickle/runtime_cn.pickle"
+        else:
+            model_path += "runtime_cn.pickle"
+
+        with open(model_path, 'wb') as handle:
+            pickle.dump(self.adj_mat, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    def load_model(self, model_path=None):
+        if model_path is None:
+            model_path = "pickle/runtime_cn.pickle"
+        else:
+            model_path += "runtime_cn.pickle"
+        
+        with open(model_path, 'rb') as handle:
+            self.adj_mat = pickle.load(handle)

@@ -16,7 +16,7 @@ class GraphSAGE(LinkPredictor):
 
     
     def train(self, graph, val_edges=None, epochs=500, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
-              node_emb_dim = 256, batch_size = 64 * 1024):
+              node_emb_dim = 256, batch_size = 64 * 512):
         """
         Trains the GNN model
         graph: networkx graph of training data
@@ -84,10 +84,10 @@ class GraphSAGE(LinkPredictor):
                 result = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
                 val_performance = result['Hits@20']
                 val_hits.append(val_performance)
-                if (e+1)%10 ==0:
+                if (e+1)%10 == 0:
                     print(result)
                 if val_performance > max_val:
-                    self.save_model()
+                    self.save_model(model_path=f"models/trained_model_files/ep{e}_")
                     max_val = val_performance
                     print("=> max val =", max_val)
 
@@ -136,7 +136,10 @@ class GraphSAGE(LinkPredictor):
     # NOTE: These assume you're running the command from LinkPredicitonOGB directory
     def save_model(self, model_path=None):
         if model_path is None:
-            model_path = "models/trained_model_files/gnn_dict.pt"
+            model_path = "models/trained_model_files/gnn.pt"
+        else:
+            model_path += "gnn.pt"
+        
         torch.save({
             "emb": self.emb,
             "model": self.model,
@@ -147,7 +150,10 @@ class GraphSAGE(LinkPredictor):
     
     def load_model(self, model_path=None):
         if model_path is None:
-            model_path = "models/trained_model_files/gnn_dict.pt"
+            model_path = "models/trained_model_files/gnn.pt"
+        else:
+            model_path += "gnn.pt"
+        
         model_dict = torch.load(model_path)
         self.emb = model_dict["emb"]
         self.model = model_dict["model"]

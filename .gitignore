@@ -5,3 +5,4 @@ processed/*
 dataset/__pycache__/
 models/trained_model_files
 pickle/*
+*.pickle

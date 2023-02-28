@@ -2,9 +2,10 @@ from models.LinkPredModel import LinkPredictor
 import networkx as nx
 import numpy as np
 from scipy.spatial import distance
+from scipy.sparse.linalg import svds 
 
 
-class MatrixFactorization(LinkPredictor):
+class LatentFactor(LinkPredictor):
 
     """
     As described by Link Prediction for Social Network Paper
@@ -19,11 +20,15 @@ class MatrixFactorization(LinkPredictor):
         self.eigenvect = None
         self.eigenval = None
         self.adj_mat = None
+        self.projected = None
         
 
-    def train(self, graph:list, **kwargs:dict) -> None:
+    def train(self, graph:list, k=100,  **kwargs:dict) -> None:
+        
         adj_matrix = nx.adjacency_matrix(graph)
         eigenval, eigenvec = np.linalg.eig(adj_matrix.toarray())
+        print("Edge count: ", np.count_nonzero(adj_matrix.toarray()))
+        print("node count: ", adj_matrix.toarray().shape[0])
         eigenval = np.real(eigenval)
         eigenvect = np.real(eigenvec)
         # save first 100 eigenvectors and eigenvalues 
@@ -31,13 +36,14 @@ class MatrixFactorization(LinkPredictor):
         self.eigenvect = eigenvect[:, :k]
         self.eigenval = eigenval[:k]
         self.adj_mat = adj_matrix
-
+        
     
     def score_edge(self, node1:int, node2:int) -> float:
         """
         calculating score using dotproduct of Q_r and P_T_i as shown in slide 20 of rec_sys2 lecture
         notes : reconstruction performs the same as the projection
         """
+        
         n1_proj = self.adj_mat[node1].T @ self.eigenvect
         n2_proj = self.adj_mat[node2].T @ self.eigenvect
         n1_recon = n1_proj @ self.eigenvect.T
@@ -53,10 +59,13 @@ class MatrixFactorization(LinkPredictor):
 
 
     def save_model(self, model_path=None):
-        np.savez(model_path, self.eigenval, self.eigenvect, self.adj_mat.toarray())
+        # np.savez(model_path, self.eigenval, self.eigenvect, self.adj_mat.toarray())
+        np.savez(model_path, self.projected)
     
     def load_model(self, model_path=None):
         npz = np.load(model_path)
+        
         self.eigenval = npz['arr_0']
         self.eigenvect = npz['arr_1']
         self.adj_mat = npz['arr_2']
+    

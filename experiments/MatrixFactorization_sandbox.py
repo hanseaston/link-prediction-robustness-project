@@ -5,10 +5,11 @@ sys.path.append(os.getcwd())
 #####################################################################
 
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
-from models.LatentFactor import LatentFactor
+from models.MatrixFactorization import MatrixFactorization
 import pandas as pd
 import networkx as nx
 import time
+import dataset.utils as utils
 
 """
 This is an example of the methods we'll call on each model
@@ -17,7 +18,7 @@ This is an example of the methods we'll call on each model
 def main():
     start = time.time()
 
-    #train_test()
+    train_test()
     load_test()
 
     end = time.time()
@@ -35,14 +36,15 @@ def train_test():
     G = nx.from_pandas_edgelist(df)
 
     print("=> Initializing Factorization Model model...")
-    model = LatentFactor()
+    model = MatrixFactorization()
 
     print("=> Training model")
     # no need to use epochs or validation set 
-    model.train(graph=G)
+    g, split_dict = utils.load_data(True)
+    model.train(graph=g, val_edges = split_dict['valid'])
 
-    print("=> Saving model...")
-    model.save_model(model_path = "models/trained_model_files/latent_factor_model")
+    #print("=> Saving model...")
+    #model.save_model(model_path = "models/trained_model_files/mf_model")
 
 
 
@@ -56,11 +58,11 @@ def load_test():
     df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv.gz", names=["source", "target"])
     G = nx.from_pandas_edgelist(df)
 
-    print("=> Initializing GraphSAGE model...")
-    model = LatentFactor()
+    print("=> Initializing Factorization model...")
+    model = MatrixFactorization()
 
     print("=> Loading model")
-    model.load_model(model_path = "models/trained_model_files/latent_factor_model.npz")
+    model.load_model(model_path = "models/trained_model_files/mf_model")
     
     print("=> Testing model")
     pos_preds = model.score_edges(split_edge["valid"]["edge"].tolist())

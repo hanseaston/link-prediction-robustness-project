@@ -1,89 +1,104 @@
 import networkx as nx
-import random
 from ogb.linkproppred import PygLinkPropPredDataset
 import pandas as pd
+import csv
+import torch
 
-def perturb_data(graph, edges, method="random", seed=123, proportion=0.1):
-    """
-    Given a networkx graph, returns new version of the graph with edges removed according to the
-    given method. Proportion indicates the proportion of edges that are perturbed.
+NUM_NODES = 4267
 
-    NOTE: This method will mutate your original graph...?
-    """
-
-    random.seed(seed)
-    graph_copy = graph.copy(as_view=False)
-
-
-    match method:
-        case "random_removal":
-            return random_removal(graph_copy, edges, proportion)
-        case "random_add":
-            return random_add(graph_copy, edges, proportion)
-        case "random_swap":
-            return random_swap(graph_copy, edges, proportion)
-
-        case _:
-            raise Exception(f"{method} is not a supported method for edge removal.")
-
-
-def random_removal(graph, edges, proportion):
-    num_edges = graph.number_of_edges()
-    num_removed = int(proportion * num_edges)
-    idxs = random.sample(range(num_edges), num_removed)
-    ebunch = [e for i, e in enumerate(graph.edges) if i in idxs]
-    graph.remove_edges_from(ebunch)
-
-def random_add(graph, edges, proportion):
-    pass
-
-def random_swap(graph, edges, proportion):
-    pass
-
-
-def load_data(test_as_tensor=False):
+def load_data(test_as_tensor=False, perturbation_path=None):
     """
     Loads the OGB-DDI dataset and returns a networkx graph for training, as well as the validation
     and test edges as a dicitonary e.g. "val" -> "pos" -> [(1, 2), (3, 4), ...]
 
     If test_as_tensor=True, returns the val/test split as tensor instead of edge list
     """
-    
     dataset = PygLinkPropPredDataset(name="ogbl-ddi", root='./dataset/')
-    df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
-    G = nx.from_pandas_edgelist(df)
+
+    if perturbation_path is None:
+        df = pd.read_csv("dataset/ogbl_ddi/raw/edge.csv", names=["source", "target"])
+        G = nx.from_pandas_edgelist(df)
+    else:
+        df = pd.read_csv(perturbation_path, names=["source", "target"])
+        G = nx.from_pandas_edgelist(df)
+
+    # TODO: This is not a great final solution. When applying link prediction to graphs, we
+    #       don't consider nodes with no neighbors at all
+    # Add back all nodes that were disconnected during perturbation
+    for node in range(NUM_NODES):
+        if not G.has_node(node):
+            print(node, "not in graph")
+            G.add_node(node)
+        
 
     split_edge = dataset.get_edge_split()
 
-    if not test_as_tensor:
-        split_dict = {
-            "train": {
-                "edge": split_edge["train"]["edge"].tolist(),
-            },
-            "valid": {
-                "edge": split_edge["valid"]["edge"].tolist(),
-                "edge_neg": split_edge["valid"]["edge_neg"].tolist()
-            },
-            "test": {
-                "edge": split_edge["test"]["edge"].tolist(),
-                "edge_neg": split_edge["test"]["edge_neg"].tolist()
-            },
-        }
+    if perturbation_path is None:
+        if not test_as_tensor:
+            split_dict = {
+                "train": {
+                    "edge": split_edge["train"]["edge"].tolist(),
+                },
+                "valid": {
+                    "edge": split_edge["valid"]["edge"].tolist(),
+                    "edge_neg": split_edge["valid"]["edge_neg"].tolist()
+                },
+                "test": {
+                    "edge": split_edge["test"]["edge"].tolist(),
+                    "edge_neg": split_edge["test"]["edge_neg"].tolist()
+                },
+            }
+        else:
+            split_dict = {
+                "train": {
+                    "edge": split_edge["train"]["edge"],
+                },
+                "valid": {
+                    "edge": split_edge["valid"]["edge"],
+                    "edge_neg": split_edge["valid"]["edge_neg"]
+                },
+                "test": {
+                    "edge": split_edge["test"]["edge"],
+                    "edge_neg": split_edge["test"]["edge_neg"]
+                },
+            }
+        return G, split_dict
     else:
-        split_dict = {
-            "train": {
-                "edge": split_edge["train"]["edge"],
-            },
-            "valid": {
-                "edge": split_edge["valid"]["edge"],
-                "edge_neg": split_edge["valid"]["edge_neg"]
-            },
-            "test": {
-                "edge": split_edge["test"]["edge"],
-                "edge_neg": split_edge["test"]["edge_neg"]
-            },
-        }
+        train_edges = []
+        with open(perturbation_path, 'r') as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for row in csv_reader:
+                train_edges.append([int(row[0]), int(row[1])])
+        csv_file.close()
 
-    return G, split_dict
-
+        if not test_as_tensor:
+            split_dict = {
+                "train": {
+                    "edge": train_edges,
+                },
+                "valid": {
+                    "edge": split_edge["valid"]["edge"].tolist(),
+                    "edge_neg": split_edge["valid"]["edge_neg"].tolist()
+                },
+                "test": {
+                    "edge": split_edge["test"]["edge"].tolist(),
+                    "edge_neg": split_edge["test"]["edge_neg"].tolist()
+                },
+            }
+        else:
+            split_dict = {
+                "train": {
+                    "edge": torch.Tensor(train_edges), # TODO: not too sure about this, need to double check
+                },
+                "valid": {
+                    "edge": split_edge["valid"]["edge"],
+                    "edge_neg": split_edge["valid"]["edge_neg"]
+                },
+                "test": {
+                    "edge": split_edge["test"]["edge"],
+                    "edge_neg": split_edge["test"]["edge_neg"]
+                },
+            }
+        return G, split_dict
     
+        

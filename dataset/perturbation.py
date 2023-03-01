@@ -16,7 +16,7 @@ def perturb_data(method="random", seed=123, perturbation_amount=0):
 
     graph, split_dict = load_data()
 
-    train_edges = split_dict["train"]["edge"]
+    # print(len(split_dict["train"]["edge"]))
 
     match method:
         case "random_remove":
@@ -92,6 +92,9 @@ def random_swap(split_dict, graph, num_edges_to_swap):
     deleted = set() # all the edges that need to be removed at the end
     added = set() # all the edges that need to be addeda at the end
 
+    visited = set()
+
+
     while True:
         if count == num_edges_to_swap: 
             break
@@ -100,6 +103,12 @@ def random_swap(split_dict, graph, num_edges_to_swap):
             # pick two random edges and see if they are eligible for swapping
             first_edge_idx = random.randint(0, len(train_edges) - 1)
             second_edge_idx = random.randint(0, len(train_edges) - 1)
+
+            # ignore if already visited before
+            smaller_idx = min(first_edge_idx, second_edge_idx)
+            larger_idx = max(first_edge_idx, second_edge_idx)
+            if (smaller_idx, larger_idx) in visited:
+                continue
 
             # make sure starting vertex < ending vertex for first and second edge
             first_edge_i = min(train_edges[first_edge_idx][0], train_edges[first_edge_idx][1])
@@ -123,7 +132,9 @@ def random_swap(split_dict, graph, num_edges_to_swap):
                 added.add(first_new_edge)
                 added.add(second_new_edge)
                 count = count + 1
-                print(count)
+                visited.add((smaller_idx, larger_idx))
+
+                print('Found, current count', count)
         
     new_existing_edges = set()
     for edge in train_edges:
@@ -167,9 +178,9 @@ def get_existing_edges(train, valid, test):
 
 if __name__ == "__main__":
     
-    perturbation_amount = 1
+    perturbation_amount = 10000
     # option: random_add(% of edges added), random_remove(% of edges removed), random_swap(num_of_edges_to_swap)
-    perturb_data(method="random_add", perturbation_amount=perturbation_amount)
+    perturb_data(method="random_swap", perturbation_amount=perturbation_amount)
 
 
     # Comment this out to know how many edges exist in train, test, and valid, along with some other info

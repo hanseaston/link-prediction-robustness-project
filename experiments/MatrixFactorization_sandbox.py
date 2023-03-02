@@ -18,7 +18,7 @@ This is an example of the methods we'll call on each model
 def main():
     start = time.time()
 
-    train_test()
+    #train_test()
     load_test()
 
     end = time.time()
@@ -79,7 +79,7 @@ def load_test():
         })[f'hits@{K}']
 
         results[f'Hits@{K}'] = hits
-    print("\t Model achieves:")
+    print("\t Model achieves on validation set:")
     print("\t", results)
 
 

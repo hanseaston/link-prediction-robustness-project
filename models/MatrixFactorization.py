@@ -41,11 +41,11 @@ class MatrixFactorization(LinkPredictor):
         self.edge_index = None
 
     def train(self, graph:list, val_edges):
-        num_nodes = 4267
+        num_nodes = graph.number_of_nodes()
         hidden_channels = 256
         num_layers = 3
         dropout = 0.5
-        epochs = 30
+        epochs = 200
         lr = 0.01
         batch_size = 64 * 1024
 
@@ -83,17 +83,16 @@ class MatrixFactorization(LinkPredictor):
             pos_val_edges = val_edges["edge"]
             neg_val_edges = val_edges["edge_neg"]
 
-        max_val = None
+        min_loss = None
 
         for epoch in range(1, epochs + 1):
-            print(epoch)
             self.predictor.train()
+            total_loss = total_examples = 0
 
             for perm in DataLoader(range(pos_train_edge.size(0)), batch_size,
                         shuffle=True):
 
 
-                total_loss = total_examples = 0
                 optimizer.zero_grad()
 
                 edge = pos_train_edge[perm].t()
@@ -128,28 +127,36 @@ class MatrixFactorization(LinkPredictor):
 
             val_loss = pos_loss + neg_loss
 
-            if (max_val is None) or (val_loss < max_val):
-                print(val_loss)
-                max_val = val_loss
+            if (min_loss is None) or (val_loss < min_loss):
+                print("saving")
+                min_loss = val_loss
                 self.save_model()
+
+            print(epoch, min_loss)
                 
-
-
-
         return total_loss / total_examples
 
     def score_edge(self, node1:int, node2:int) -> float:
-        return self.predictor(self.emb.weight[node1], self.emb.weight[node2])
+        import ipdb
+        ipdb.set_trace()
+        self.predictor.eval()
+        edge_list = [[node1, node2]]
+        pred_list = self.score_edges(edge_list, batch_size=1)
+        return pred_list[0]
 
 
     def score_edges(self, edge_list:list):
-        results = np.zeros(len(edge_list))
-        for index, e in enumerate(edge_list):
-            node1 = e[0]
-            node2= e[1]
-            results[index] = self.score_edge(node1, node2)
+        batch_size = 64 * 1024
+        self.predictor.eval()
+        edges = torch.tensor(edge_list)
 
-        return results
+        preds = []
+        for perm in DataLoader(range(edges.size(0)), batch_size):
+            edge = edges[perm].t()
+            preds += [self.predictor(self.emb.weight[edge[0]], self.emb.weight[edge[1]]).squeeze().cpu()]
+        pred = torch.cat(preds, dim=0)
+        pred_list = pred.detach().cpu().numpy() 
+        return pred_list
 
     def save_model(self, model_path=None):
         if model_path is None:

@@ -15,8 +15,8 @@ class GraphSAGE(LinkPredictor):
         self.batch_size = -1
 
     
-    def train(self, graph, val_edges=None, epochs=500, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
-              node_emb_dim = 256, batch_size = 64 * 512):
+    def train(self, graph, val_edges, epochs=200, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
+              node_emb_dim = 256, batch_size = 64 * 512, out_path="models/trained_model_files/"):
         """
         Trains the GNN model
         graph: networkx graph of training data
@@ -73,35 +73,32 @@ class GraphSAGE(LinkPredictor):
         )
 
         train_loss = []
-        val_hits = []
-        max_val = -1
+        min_val = 999999999
         for e in range(epochs):
             loss = train(self.model, self.link_predictor, self.emb.weight, edge_index, pos_train_edge, batch_size, optimizer)
             print(f"Epoch {e + 1}: loss: {round(loss, 5)}")
             train_loss.append(loss)
-
-            if val_edges is not None:
-                result = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
-                val_performance = result['Hits@20']
-                val_hits.append(val_performance)
-                if (e+1)%10 == 0:
-                    print(result)
-                if val_performance > max_val:
-                    self.save_model(model_path=f"models/trained_model_files/ep{e}_")
-                    max_val = val_performance
-                    print("=> max val =", max_val)
+            
+            # TODO: Compute loss on val set! Don't use evaluator here...
+            val_loss = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
+            if (e+1)%10 == 0:
+                print("\t", val_loss)
+            if val_loss < min_val:
+                self.save_model(model_path=f"{out_path}")
+                min_val = val_loss
+                print("=> min val loss =", min_val)
 
         # TODO: This plotting would fit better in a different file. Maybe you could just save the training loss or val_hits??
-        import matplotlib.pyplot as plt
-        import numpy as np
-        plt.title('Link Prediction on OGB-ddi using GraphSAGE GNN')
-        plt.plot(train_loss,label="training loss")
-        plt.plot(np.arange(len(val_hits)),val_hits,label="Hits@20 on validation")
-        plt.xlabel('Epochs')
-        plt.legend()
-        plt.savefig("training_link_pred.png")
+        # import matplotlib.pyplot as plt
+        # import numpy as np
+        # plt.title('Link Prediction on OGB-ddi using GraphSAGE GNN')
+        # plt.plot(train_loss,label="training loss")
+        # plt.plot(np.arange(len(val_hits)),val_hits,label="Hits@20 on validation")
+        # plt.xlabel('Epochs')
+        # plt.legend()
+        # plt.savefig("training_link_pred.png")
 
-        print("Best val performance is", max_val)
+        # print("Best val performance is", max_val)
 
 
     def score_edge(self, node1, node2):
@@ -301,6 +298,7 @@ def train(model, link_predictor, emb, edge_index, pos_train_edge, batch_size, op
     return sum(train_losses) / len(train_losses)
 
 def test(model, predictor, emb, edge_index, pos_edge, neg_edge, batch_size, evaluator):
+    # NOTE: This just returns the val loss now
     """
     Evaluates graph model on validation and test edges
     :param model: Torch Graph model used for updating node embeddings based on message passing
@@ -333,16 +331,16 @@ def test(model, predictor, emb, edge_index, pos_edge, neg_edge, batch_size, eval
     neg_pred = torch.cat(neg_preds, dim=0)
 
 
-    results = {}
-    for K in [20, 50, 100]:
-        evaluator.K = K
-        hits = evaluator.eval({
-            'y_pred_pos': pos_pred,
-            'y_pred_neg': neg_pred,
-        })[f'hits@{K}']
+    # results = {}
+    # for K in [20, 50, 100]:
+    #     evaluator.K = K
+    #     hits = evaluator.eval({
+    #         'y_pred_pos': pos_pred,
+    #         'y_pred_neg': neg_pred,
+    #     })[f'hits@{K}']
 
-        results[f'Hits@{K}'] = hits
+    #     results[f'Hits@{K}'] = hits
 
-    return results
+    return -torch.log(pos_pred + 1e-15).mean() - torch.log(1 - neg_pred + 1e-15).mean()
 
 

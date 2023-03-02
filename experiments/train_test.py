@@ -18,11 +18,11 @@ import time
 
 
 model_types = [
-    # (GraphSAGE, "graphsage"),
+    (GraphSAGE, "graphsage"),
     # (CommonNeighbor, "commonneighbors"),
     # (AdamicAdar, "adamicadar"),
     # (RuntimeCN, "runtime_cn"),
-    (Node2Vec, "node2vec")
+    # (Node2Vec, "node2vec")
 ]
 
 def main():
@@ -46,9 +46,11 @@ def main():
                     
                     print(f"==> Training {name}: {perturb_type} {change} {prop}")
                     model = LinkPredictor()
-                    model.train(G)
 
-                    # exit() # TODO: Remove.
+                    if name == "graphsage":
+                        model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
+                    else:
+                        model.train(G)
 
                     model.save_model(out_path)
 

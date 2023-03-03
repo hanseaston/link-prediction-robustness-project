@@ -32,8 +32,10 @@ def main():
     _, split_edge_list = load_data()
 
     for perturb_type in ["random"]:
-        for change in ["remove", "add"]:
-            for prop in [0.25, 0.1, 0.01]:
+        # for change in ["remove", "add"]:
+        #     for prop in [0.25, 0.1, 0.01]:
+        for change in ["add"]:
+            for prop in [0.25]:
             
                 data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
                 G, _ = load_data(perturbation_path=data_path)

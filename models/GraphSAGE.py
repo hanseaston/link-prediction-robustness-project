@@ -72,33 +72,50 @@ class GraphSAGE(LinkPredictor):
             lr=lr, weight_decay=optim_wd
         )
 
-        train_loss = []
-        min_val = 999999999
+        # NOTE: This uses the val loss as a criterion for which model to keep
+        # min_val = 999999999
+        # for e in range(epochs):
+        #     loss = train(self.model, self.link_predictor, self.emb.weight, edge_index, pos_train_edge, batch_size, optimizer)
+        #     print(f"Epoch {e + 1}: loss: {round(loss, 5)}")
+        #     train_loss.append(loss)
+            
+        #     # TODO: Compute loss on val set! Don't use evaluator here...
+        #     val_loss = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
+        #     if (e+1)%10 == 0:
+        #         print("\t", val_loss)
+        #     if val_loss < min_val:
+        #         self.save_model(model_path=f"{out_path}")
+        #         min_val = val_loss
+        #         print("=> min val loss =", min_val)
+
+        max_val = -1
         for e in range(epochs):
             loss = train(self.model, self.link_predictor, self.emb.weight, edge_index, pos_train_edge, batch_size, optimizer)
             print(f"Epoch {e + 1}: loss: {round(loss, 5)}")
-            train_loss.append(loss)
-            
-            # TODO: Compute loss on val set! Don't use evaluator here...
-            val_loss = test(self.model, self.link_predictor, self.emb.weight, edge_index, pos_val_edges, neg_val_edges, batch_size, evaluator)
+
+            result = {}
+
+            pos_valid_preds = self.score_edges(val_edges["edge"])
+            neg_valid_preds = self.score_edges(val_edges["edge_neg"])
+
+            # metrics on validation test
+            for K in [20, 50, 100]:
+                evaluator.K = K
+                hits = evaluator.eval({
+                    'y_pred_pos': np.array(pos_valid_preds),
+                    'y_pred_neg': np.array(neg_valid_preds),
+                })[f'hits@{K}']
+
+                result[f'Hits@{K}'] = hits
+
+            val_performance = result['Hits@20']
             if (e+1)%10 == 0:
-                print("\t", val_loss)
-            if val_loss < min_val:
-                self.save_model(model_path=f"{out_path}")
-                min_val = val_loss
-                print("=> min val loss =", min_val)
+                print(result)
+            if val_performance > max_val:
+                self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
+                max_val = val_performance
+                print("=> max val =", max_val)
 
-        # TODO: This plotting would fit better in a different file. Maybe you could just save the training loss or val_hits??
-        # import matplotlib.pyplot as plt
-        # import numpy as np
-        # plt.title('Link Prediction on OGB-ddi using GraphSAGE GNN')
-        # plt.plot(train_loss,label="training loss")
-        # plt.plot(np.arange(len(val_hits)),val_hits,label="Hits@20 on validation")
-        # plt.xlabel('Epochs')
-        # plt.legend()
-        # plt.savefig("training_link_pred.png")
-
-        # print("Best val performance is", max_val)
 
 
     def score_edge(self, node1, node2):
@@ -134,7 +151,7 @@ class GraphSAGE(LinkPredictor):
     def save_model(self, model_path=None):
         if model_path is None:
             model_path = "models/trained_model_files/gnn.pt"
-        else:
+        elif model_path[-3:] != ".pt":      # NOTE: given path is directory
             model_path += "gnn.pt"
         
         torch.save({
@@ -148,7 +165,7 @@ class GraphSAGE(LinkPredictor):
     def load_model(self, model_path=None):
         if model_path is None:
             model_path = "models/trained_model_files/gnn.pt"
-        else:
+        elif model_path[-3:] != ".pt":      # NOTE: given path is directory
             model_path += "gnn.pt"
         
         model_dict = torch.load(model_path)

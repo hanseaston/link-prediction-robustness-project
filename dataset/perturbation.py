@@ -25,9 +25,129 @@ def perturb_data(method="random", seed=123, perturbation_amount=0):
             return random_swap(split_dict, graph, perturbation_amount)
         case "adversial_remove":
             return adversial_remove(split_dict, graph, perturbation_amount)
+        case "adversial_add":
+            return adversial_add(split_dict, graph, perturbation_amount)
         case _:
             raise Exception(f"{method} is not a supported method for edge removal.")
+        
+def adversial_add(split_dict, graph, perturbation_percentages):
+    train = split_dict["train"]
+    valid = split_dict["valid"]
+    test = split_dict["test"]
 
+    edges = train["edge"]
+    hidden_edges = test["edge"] # these are all the edges that we want to hide from
+
+    existing_edges = get_existing_edges(train, valid, test)
+    all_edges = get_all_possible_edges(graph.number_of_nodes())
+    potential_edges = list(all_edges.difference(existing_edges)) # all the edges that we can potentially add
+
+    # first of all, checks whether train or test set spans the entire graph
+    print('total number of vertices in graph', graph.number_of_nodes())
+    print("train set vertex cover count", get_vertex_cover_cnt(edges)) # train set covers all vertices
+    print("test set vertex cover count", get_vertex_cover_cnt(hidden_edges)) # test set only covers a subset of vertices
+
+    # construct adjency list
+    adjency_list = {}
+    ordered_edge_set = set()
+    for edge in edges:
+        v1 = edge[0]
+        v2 = edge[1]
+        if v1 not in adjency_list:
+            adjency_list[v1] = set()
+        if v2 not in adjency_list:
+            adjency_list[v2] = set()
+        adjency_list[v1].add(v2)
+        adjency_list[v2].add(v1)
+        ordered_edge_set.add((min(v1, v2), max(v1, v2)))
+    edges = ordered_edge_set
+
+    # get all vertices in test set
+    vertices_in_hidden_edges = set()
+    ordered_hidden_edges = set() 
+    for edge in hidden_edges:
+        vertices_in_hidden_edges.add(edge[0])
+        vertices_in_hidden_edges.add(edge[1])
+        ordered_hidden_edges.add((min(edge[0], edge[1]), max(edge[0], edge[1])))
+    hidden_edges = ordered_hidden_edges # make the hidden edge ordered v1 < v2 and into the set form
+    
+    # filter down list of edges to remove from, we want the edge to touch one vertex from any of the hidden edges
+    print("before filtering, there are", len(potential_edges), "edges to consider") 
+    filtered_down_edges = set()
+    for edge in potential_edges:
+        vertex1 = edge[0]
+        vertex2 = edge[1]
+        if vertex1 in vertices_in_hidden_edges or vertex2 in vertices_in_hidden_edges:
+            filtered_down_edges.add((min(vertex1, vertex2), max(vertex1, vertex2)))
+    print("after filtering, there are", len(filtered_down_edges), "edges to consider")    
+
+    # intialize edge scores
+    edge_scores = {}
+    for edge in filtered_down_edges:
+        vertex1 = min(edge[0], edge[1])
+        vertex2 = max(edge[0], edge[1])
+        edge_scores[(vertex1, vertex2)] = 0
+    
+    vertices_set = set(range(0, graph.number_of_nodes()))
+    
+    idx = 0
+    for edge in filtered_down_edges:
+        if idx == 10000: 
+            break
+        print('iteration', idx)
+        vertex1 = edge[0]
+        vertex2 = edge[1]
+        negative_edge_score = False
+        for vertex3 in vertices_set:
+            # for edge XY and any vertex in the graph V, for edges XV and YV
+            # if one of the edges is existing edge and the other is a hidden edge
+            # XV, then it will make the hidden edge more exposed, thus we assign a negative
+            # score to it to indicate it is a bad candidate.
+            edge1 = (min(vertex1, vertex3), max(vertex1, vertex3))
+            edge2 = (min(vertex2, vertex3), max(vertex2, vertex3))
+            if edge1 in hidden_edges and edge2 in edges:
+                negative_edge_score = True
+                break
+            if edge1 in edges and edge2 in hidden_edges:
+                negative_edge_score = True
+                break
+        if negative_edge_score:
+            edge_scores[edge] = -1
+        else:
+            # otherwise, the score is assigned the union of X and Y's neighbors (the more neighbors, the more
+            # likely other links will be chosen over the hidden link)
+            vertex1_neighbors = adjency_list[vertex1]
+            vertex2_neighbors = adjency_list[vertex2]
+            edge_scores[edge] = len(vertex1_neighbors.union(vertex2_neighbors))
+        idx += 1
+
+    # sort edges based on descending edge scores
+    edge_scores = list(edge_scores.items())
+    edge_scores.sort(key=lambda e : -e[1])
+
+    non_negative_one_cnt = 0
+    for edge_score in edge_scores:
+        if edge_score[1] != -1:
+            non_negative_one_cnt = non_negative_one_cnt + 1
+    print("there are", non_negative_one_cnt, "non-negative scores out of", len(edge_scores), "total edges")
+    print('top five scores', edge_scores[0:5])
+
+    added_edges = [e[0] for e in edge_scores]
+
+    # loop over each percentage
+    for perturbation_percentage in perturbation_percentages:
+
+        # take the [k:] remaining edges, where k is derived from the preturbation percentage
+        added_cnt = int(perturbation_percentage * len(edges))
+        selected_edges = added_edges[0:added_cnt]
+
+        # write to output file
+        file_name = f"dataset/perturbation/adversial_add_{perturbation_percentage}.csv"
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            for edge in selected_edges:
+                writer.writerow(edge)
+    
 def adversial_remove(split_dict, graph, perturbation_percentage):
     train = split_dict["train"]
     test = split_dict["test"]
@@ -260,8 +380,8 @@ if __name__ == "__main__":
     
     # option: random_add(% of edges added), random_remove(% of edges removed), random_swap(num_of_edges_to_swap)
     # adversial_remove(% of edges removed)
-    perturbation_amount = 0.50
-    perturb_data(method="adversial_remove", perturbation_amount=perturbation_amount)
+    perturbation_amount = [0.01, 0.1, 0.25, 0.5, 1.0]
+    perturb_data(method="adversial_add", perturbation_amount=perturbation_amount)
 
 
     # Comment this out to know how many edges exist in train, test, and valid, along with some other info

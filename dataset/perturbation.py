@@ -98,8 +98,8 @@ def adversial_add(split_dict, graph, perturbation_percentages):
         negative_edge_score = False
         for vertex3 in vertices_set:
             # for edge XY and any vertex in the graph V, for edges XV and YV
-            # if one of the edges is existing edge and the other is a hidden edge
-            # XV, then it will make the hidden edge more exposed, thus we assign a negative
+            # if one of the edges is existing edge and the other is a hidden edge,
+            # then it will make the hidden edge more exposed, thus we assign a negative
             # score to it to indicate it is a bad candidate.
             edge1 = (min(vertex1, vertex3), max(vertex1, vertex3))
             edge2 = (min(vertex2, vertex3), max(vertex2, vertex3))

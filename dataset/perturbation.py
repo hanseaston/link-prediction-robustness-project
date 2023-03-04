@@ -135,7 +135,7 @@ def adversial_add(split_dict, graph, perturbation_percentages):
     # loop over each percentage
     for perturbation_percentage in perturbation_percentages:
 
-        # take the [k:] remaining edges, where k is derived from the preturbation percentage
+        # take the [0:k] new edges, where k is derived from the preturbation percentage
         added_cnt = int(perturbation_percentage * len(edges))
         selected_edges = added_edges[0:added_cnt]
 
@@ -207,7 +207,7 @@ def adversial_remove(split_dict, graph, perturbation_percentage):
     edge_scores = list(edge_scores.items())
     edge_scores.sort(key=lambda e : -e[1])
 
-    # take the [0:k] new edges, where k is derived from the preturbation percentage
+    # take the [k:] remaining edges, where k is derived from the preturbation percentage
     removed_cnt = int(perturbation_percentage * len(edges))
     remaining_edges = edge_scores[removed_cnt:]
     remaining_edges = [e[0] for e in remaining_edges]

@@ -92,8 +92,6 @@ def adversial_add(split_dict, graph, perturbation_percentages):
     
     idx = 0
     for edge in filtered_down_edges:
-        if idx == 10000: 
-            break
         print('iteration', idx)
         vertex1 = edge[0]
         vertex2 = edge[1]
@@ -209,7 +207,7 @@ def adversial_remove(split_dict, graph, perturbation_percentage):
     edge_scores = list(edge_scores.items())
     edge_scores.sort(key=lambda e : -e[1])
 
-    # take the [k:] remaining edges, where k is derived from the preturbation percentage
+    # take the [0:k] new edges, where k is derived from the preturbation percentage
     removed_cnt = int(perturbation_percentage * len(edges))
     remaining_edges = edge_scores[removed_cnt:]
     remaining_edges = [e[0] for e in remaining_edges]

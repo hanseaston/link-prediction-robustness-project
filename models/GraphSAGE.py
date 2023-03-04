@@ -1,5 +1,6 @@
 from models.LinkPredModel import LinkPredictor
 import numpy as np
+import os
 
 class GraphSAGE(LinkPredictor):
 
@@ -112,6 +113,7 @@ class GraphSAGE(LinkPredictor):
             if (e+1)%10 == 0:
                 print(result)
             if val_performance > max_val:
+                os.makedirs(f"{out_path}gnn_trained/", exist_ok=True)
                 self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
                 max_val = val_performance
                 print("=> max val =", max_val)

@@ -5,7 +5,9 @@ sys.path.append(os.getcwd())
 
 from models.GraphSAGE import GraphSAGE
 from models.Neighborhood import CommonNeighbor, AdamicAdar, RuntimeCN
-from models.RandomWalk import Node2Vec
+
+# NOTE: Need to add this to the conda env
+# from models.RandomWalk import Node2Vec
 
 from ogb.linkproppred import Evaluator
 
@@ -16,6 +18,8 @@ import networkx as nx
 from dataset.utils import load_data
 import time
 
+TRAIN = False
+
 
 model_types = [
     (GraphSAGE, "graphsage"),
@@ -25,6 +29,9 @@ model_types = [
     # (Node2Vec, "node2vec")
 ]
 
+perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
+                ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
+
 def main():
 
     perturb_dir = "dataset/perturbation"
@@ -32,10 +39,12 @@ def main():
     _, split_edge_list = load_data()
 
     for perturb_type in ["random"]:
+        for change, prop in perturb_list:
+
         # for change in ["remove", "add"]:
         #     for prop in [0.25, 0.1, 0.01]:
-        for change in ["add"]:
-            for prop in [0.25]:
+        # for change in ["add"]:
+        #     for prop in [0.5]:
             
                 data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
                 G, _ = load_data(perturbation_path=data_path)
@@ -46,17 +55,46 @@ def main():
                     out_path = f"results/{perturb_type}/{change}/{prop}/"
                     os.makedirs(out_path, exist_ok=True)
                     
-                    print(f"==> Training {name}: {perturb_type} {change} {prop}")
                     model = LinkPredictor()
 
-                    if name == "graphsage":
-                        model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
-                    else:
-                        model.train(G)
+                    if TRAIN:
+                        print(f"==> Training {name}: {perturb_type} {change} {prop}")
+                        if name == "graphsage":
+                            model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
+                            
+                            # NOTE: Load best performing model from gnn_trained directory and use
+                            #       that for testing
+                            load_path = f"{out_path}gnn_trained"
+                            print("=>", load_path)
+                            if not os.path.isdir(f"{load_path}"):
+                                raise 
+                                continue
+                            path_list = os.listdir(load_path)
+                            # Use string formatting to get the latest epoch
+                            path_list.sort(key = lambda pth: int(pth[2:-7]))
+                            print("\tBest model:", path_list[-1])
+                            model.load_model(f"{load_path}/{path_list[-1]}")
+                            model.save_model(out_path)
 
-                    model.save_model(out_path)
+                        else:
+                            model.train(G)
+                        model.save_model(out_path)
 
                     print(f"==> Testing")
+                    if name == "graphsage":
+                        # TODO: Get the best model from the gnn_trained directory
+                        load_path = f"{out_path}gnn_trained"
+                        print("=>", load_path)
+                        if not os.path.isdir(f"{load_path}"):
+                            print("\tcontinue...")
+                            continue
+                        path_list = os.listdir(load_path)
+                        # Use string formatting to get the latest epoch
+                        path_list.sort(key = lambda pth: int(pth[2:-7]))
+                        print("\tBest model:", path_list[-1])
+                        model.load_model(f"{load_path}/{path_list[-1]}")
+                        model.save_model(out_path)
+
                     model.load_model(out_path)
 
                     # TODO: Make train/val/test format independent of model type
@@ -106,9 +144,9 @@ def main():
                         f.write("On test set, model achieves:\n")
                         f.write(str(results))
 
-                    end = time.time()
+    end = time.time()
 
-                    print(f"\tScript took {round((end - start) / 60, 2)} minutes to run")
+    print(f"\tScript took {round((end - start) / 60, 2)} minutes to run")
 
 
 

@@ -1,5 +1,6 @@
 from models.LinkPredModel import LinkPredictor
 import numpy as np
+import os
 
 class GraphSAGE(LinkPredictor):
 
@@ -25,6 +26,8 @@ class GraphSAGE(LinkPredictor):
         
         num_nodes = graph.number_of_nodes()
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            print("=> Using cuda")
         optim_wd = 0
         self.batch_size = batch_size
 
@@ -112,6 +115,7 @@ class GraphSAGE(LinkPredictor):
             if (e+1)%10 == 0:
                 print(result)
             if val_performance > max_val:
+                os.makedirs(f"{out_path}/gnn_trained/", exist_ok=True)
                 self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
                 max_val = val_performance
                 print("=> max val =", max_val)

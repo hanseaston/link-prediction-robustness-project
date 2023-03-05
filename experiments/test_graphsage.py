@@ -25,12 +25,12 @@ Sandbox for GraphSAGE link prediction
 def main():
     start = time.time()
 
-    # if TRAIN:
-    #     train()
-    # else:
-    #     load_test()
+    if TRAIN:
+        train()
+    else:
+        load_test()
 
-    get_results()
+    # get_results()
 
     end = time.time()
 
@@ -41,8 +41,9 @@ def get_results():
     _, split_edge = load_data()
 
     
-    eps = [2, 3, 5, 6, 7, 9, 10, 13, 20, 21, 25, 29, 36, 38, 40, 46, 48, 51, 52, 63, 66, 67, \
-               74, 75, 76, 78, 80, 88, 108, 112, 124]
+    # eps = [2, 3, 5, 6, 7, 9, 10, 13, 20, 21, 25, 29, 36, 38, 40, 46, 48, 51, 52, 63, 66, 67, \
+    #            74, 75, 76, 78, 80, 88, 108, 112, 124]
+    eps = []
     results_val = {
             'Hits@20': [],
             'Hits@50': [],
@@ -54,9 +55,13 @@ def get_results():
             'Hits@100': []
             }
 
-    for ep in eps:
-        model_path = f"results/random/add/0.25/gnn_training/ep{ep}_gnn.pt"
+    for ep in range(200):
+        model_path = f"results/random/remove/0/gnn_trained/ep{ep}_gnn.pt"
         model = GraphSAGE()
+        if not os.path.isfile(model_path):
+            continue
+        
+        eps.append(ep)
         model.load_model(model_path)
 
         pos_valid_preds = model.score_edges(split_edge["valid"]["edge"])
@@ -139,7 +144,7 @@ def load_test():
     model = GraphSAGE()
 
     print("=> Loading model...")
-    model_dir = "results/random/add/0.25/gnn_training/ep124_gnn.pt"
+    model_dir = "results/random/remove/0/gnn_trained/ep147_gnn.pt"
     model.load_model(model_dir)
     
     print("=> Testing model")

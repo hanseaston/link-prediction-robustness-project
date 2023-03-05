@@ -115,7 +115,11 @@ class GraphSAGE(LinkPredictor):
             if (e+1)%10 == 0:
                 print(result)
             if val_performance > max_val:
+<<<<<<< HEAD
                 os.makedirs(f"{out_path}/gnn_trained/", exist_ok=True)
+=======
+                os.makedirs(f"{out_path}gnn_trained/", exist_ok=True)
+>>>>>>> d6693490b9b76cb9562aebbadffdee1fa1559411
                 self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
                 max_val = val_performance
                 print("=> max val =", max_val)

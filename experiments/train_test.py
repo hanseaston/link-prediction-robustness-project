@@ -67,7 +67,7 @@ def main():
                             load_path = f"{out_path}gnn_trained"
                             print("=>", load_path)
                             if not os.path.isdir(f"{load_path}"):
-                                raise 
+                                print(f"\n\nDoes not exist: {load_path}\n")
                                 continue
                             path_list = os.listdir(load_path)
                             # Use string formatting to get the latest epoch

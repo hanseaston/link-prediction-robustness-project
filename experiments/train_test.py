@@ -18,19 +18,20 @@ import networkx as nx
 from dataset.utils import load_data
 import time
 
-TRAIN = False
+TRAIN = True
 
 
 model_types = [
-    (GraphSAGE, "graphsage"),
+    # (GraphSAGE, "graphsage"),
     # (CommonNeighbor, "commonneighbors"),
+    (RuntimeCN, "runtime_cn"),
     # (AdamicAdar, "adamicadar"),
-    # (RuntimeCN, "runtime_cn"),
     # (Node2Vec, "node2vec")
 ]
 
 perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
                 ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
+# perturb_list = [("add", 0.5), ("remove", 0), ("swap", 0.01)]
 
 def main():
 
@@ -40,53 +41,29 @@ def main():
 
     for perturb_type in ["random"]:
         for change, prop in perturb_list:
-
-        # for change in ["remove", "add"]:
-        #     for prop in [0.25, 0.1, 0.01]:
-        # for change in ["add"]:
-        #     for prop in [0.5]:
             
-                data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
-                G, _ = load_data(perturbation_path=data_path)
+            data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
+            G, _ = load_data(perturbation_path=data_path)
 
-                for LinkPredictor, name in model_types:
-                    start = time.time()
+            for LinkPredictor, name in model_types:
+                start = time.time()
 
-                    out_path = f"results/{perturb_type}/{change}/{prop}/"
-                    os.makedirs(out_path, exist_ok=True)
-                    
-                    model = LinkPredictor()
+                out_path = f"results/{perturb_type}/{change}/{prop}"
+                os.makedirs(out_path, exist_ok=True)
+                
+                model = LinkPredictor()
 
-                    if TRAIN:
-                        print(f"==> Training {name}: {perturb_type} {change} {prop}")
-                        if name == "graphsage":
-                            model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
-                            
-                            # NOTE: Load best performing model from gnn_trained directory and use
-                            #       that for testing
-                            load_path = f"{out_path}gnn_trained"
-                            print("=>", load_path)
-                            if not os.path.isdir(f"{load_path}"):
-                                print(f"\n\nDoes not exist: {load_path}\n")
-                                continue
-                            path_list = os.listdir(load_path)
-                            # Use string formatting to get the latest epoch
-                            path_list.sort(key = lambda pth: int(pth[2:-7]))
-                            print("\tBest model:", path_list[-1])
-                            model.load_model(f"{load_path}/{path_list[-1]}")
-                            model.save_model(out_path)
-
-                        else:
-                            model.train(G)
-                        model.save_model(out_path)
-
-                    print(f"==> Testing")
+                if TRAIN:
+                    print(f"==> Training {name}: {perturb_type} {change} {prop}")
                     if name == "graphsage":
-                        # TODO: Get the best model from the gnn_trained directory
-                        load_path = f"{out_path}gnn_trained"
+                        model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
+                        
+                        # NOTE: Load best performing model from gnn_trained directory and use
+                        #       that for testing
+                        load_path = f"{out_path}/gnn_trained"
                         print("=>", load_path)
                         if not os.path.isdir(f"{load_path}"):
-                            print("\tcontinue...")
+                            print(f"\n\nDoes not exist: {load_path}\n")
                             continue
                         path_list = os.listdir(load_path)
                         # Use string formatting to get the latest epoch
@@ -95,54 +72,80 @@ def main():
                         model.load_model(f"{load_path}/{path_list[-1]}")
                         model.save_model(out_path)
 
-                    model.load_model(out_path)
-
-                    # TODO: Make train/val/test format independent of model type
-                    if name == "graphsage":
-                        split_edge = split_edge_tensor
                     else:
-                        split_edge = split_edge_list
-                    
+                        model.train(G)
+                    model.save_model(out_path)
+                    model.save_model(f"trained_models/{perturb_type}/{change}/{prop}")
 
-                    pos_valid_preds = model.score_edges(split_edge["valid"]["edge"])
-                    neg_valid_preds = model.score_edges(split_edge["valid"]["edge_neg"])
+                print(f"==> Testing")
+                # if name == "graphsage":
+                #     # Get the best model from the gnn_trained directory
+                #     load_path = f"{out_path}/gnn_trained"
+                #     print("=>", load_path)
+                #     if not os.path.isdir(f"{load_path}"):
+                #         print("\tcontinue...")
+                #         continue
+                #     path_list = os.listdir(load_path)
+                #     # Use string formatting to get the latest epoch
+                #     path_list.sort(key = lambda pth: int(pth[2:-7]))
+                #     print("\tBest model:", path_list[-1])
+                #     model.load_model(f"{load_path}/{path_list[-1]}")
+                #     model.save_model(out_path)
 
-                    pos_test_pred = model.score_edges(split_edge["test"]["edge"])
-                    neg_test_pred = model.score_edges(split_edge["test"]["edge_neg"])
-                    print("\tEdges scored")
+                # TODO: Change this back
+                model.load_model(out_path)
+                # if not os.path.isfile(f"trained_models/{perturb_type}/{change}/{prop}/gnn.pt"):
+                #     print("\tcontinue...")
+                #     continue
+                model.load_model(f"trained_models/{perturb_type}/{change}/{prop}")
 
-                    evaluator = Evaluator(name='ogbl-ddi')
-                    results = {}
+                if name == "graphsage":
+                    split_edge = split_edge_tensor
+                else:
+                    split_edge = split_edge_list
+                
 
-                    # metrics on validation test
-                    for K in [20, 50, 100]:
-                        evaluator.K = K
-                        hits = evaluator.eval({
-                            'y_pred_pos': np.array(pos_valid_preds),
-                            'y_pred_neg': np.array(neg_valid_preds),
-                        })[f'hits@{K}']
+                pos_valid_preds = model.score_edges(split_edge["valid"]["edge"])
+                neg_valid_preds = model.score_edges(split_edge["valid"]["edge_neg"])
 
-                        results[f'Hits@{K}'] = hits
+                pos_test_pred = model.score_edges(split_edge["test"]["edge"])
+                neg_test_pred = model.score_edges(split_edge["test"]["edge_neg"])
+                print("\tEdges scored")
 
-                    print("\tVal scoring evaluated")
-                    
-                    with open(f"{out_path}/{name}.txt", 'w') as f:
-                        f.write("On validation set, model achieves:\n")
-                        f.write(str(results) + "\n\n")
+                evaluator = Evaluator(name='ogbl-ddi')
+                results = {}
 
-                    # metrics on test test
-                    for K in [20, 50, 100]:
-                        evaluator.K = K
-                        hits = evaluator.eval({
-                            'y_pred_pos': np.array(pos_test_pred),
-                            'y_pred_neg': np.array(neg_test_pred),
-                        })[f'hits@{K}']
+                # metrics on validation test
+                for K in [20, 50, 100]:
+                    evaluator.K = K
+                    hits = evaluator.eval({
+                        'y_pred_pos': np.array(pos_valid_preds),
+                        'y_pred_neg': np.array(neg_valid_preds),
+                    })[f'hits@{K}']
 
-                        results[f'Hits@{K}'] = hits
-                    
-                    with open(f'{out_path}/{name}.txt', 'a') as f:
-                        f.write("On test set, model achieves:\n")
-                        f.write(str(results))
+                    results[f'Hits@{K}'] = hits
+
+                print("\tVal scoring evaluated")
+                print(results)
+                
+                with open(f"{out_path}/{name}_final.txt", 'w') as f:
+                    f.write("On validation set, model achieves:\n")
+                    f.write(str(results) + "\n\n")
+
+                # metrics on test test
+                for K in [20, 50, 100]:
+                    evaluator.K = K
+                    hits = evaluator.eval({
+                        'y_pred_pos': np.array(pos_test_pred),
+                        'y_pred_neg': np.array(neg_test_pred),
+                    })[f'hits@{K}']
+
+                    results[f'Hits@{K}'] = hits
+                
+                with open(f'{out_path}/{name}_final.txt', 'a') as f:
+                    f.write("On test set, model achieves:\n")
+                    f.write(str(results))
+                print(results)
 
     end = time.time()
 

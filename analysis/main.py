@@ -3,6 +3,8 @@ import os
 sys.path.append(os.getcwd())
 #####################################################################
 
+## TODO: Write a script for analyzing
+
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models.GraphSAGE import GraphSAGE
 import pandas as pd

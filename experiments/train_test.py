@@ -34,10 +34,11 @@ def main():
     for perturb_type in ["random"]:
         # for change in ["remove", "add"]:
         #     for prop in [0.25, 0.1, 0.01]:
-        for change in ["remove"]:
-            for prop in [0.5]:
+        for change in ["add"]:
+            for prop in [1]:
             
                 data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
+                print("data_path:", data_path)
                 G, _ = load_data(perturbation_path=data_path)
 
                 for LinkPredictor, name in model_types:
@@ -51,6 +52,7 @@ def main():
 
                     if name == "graphsage":
                         model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
+                        # TODO: Make this take the best trained model from epoch
                     else:
                         model.train(G)
 

@@ -17,7 +17,7 @@ class GraphSAGE(LinkPredictor):
 
     
     def train(self, graph, val_edges, epochs=200, hidden_dim=256, num_layers=2, dropout=0.3, lr = 3e-3,
-              node_emb_dim = 256, batch_size = 64 * 512, out_path="models/trained_model_files/"):
+              node_emb_dim = 256, batch_size = 64 * 512, out_path="models/trained_model_files"):
         """
         Trains the GNN model
         graph: networkx graph of training data
@@ -115,7 +115,7 @@ class GraphSAGE(LinkPredictor):
             if (e+1)%10 == 0:
                 print(result)
             if val_performance > max_val:
-                os.makedirs(f"{out_path}gnn_trained/", exist_ok=True)
+                os.makedirs(f"{out_path}/gnn_trained/", exist_ok=True)
                 self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
                 max_val = val_performance
                 print("=> max val =", max_val)
@@ -156,7 +156,7 @@ class GraphSAGE(LinkPredictor):
         if model_path is None:
             model_path = "models/trained_model_files/gnn.pt"
         elif model_path[-3:] != ".pt":      # NOTE: given path is directory
-            model_path += "gnn.pt"
+            model_path += "/gnn.pt"
         
         torch.save({
             "emb": self.emb,
@@ -170,7 +170,7 @@ class GraphSAGE(LinkPredictor):
         if model_path is None:
             model_path = "models/trained_model_files/gnn.pt"
         elif model_path[-3:] != ".pt":      # NOTE: given path is directory
-            model_path += "gnn.pt"
+            model_path += "/gnn.pt"
         
         model_dict = torch.load(model_path)
         self.emb = model_dict["emb"]

@@ -67,6 +67,9 @@ def load_data(test_as_tensor=False, perturbation_path=None):
         with open(perturbation_path, 'r') as csv_file:
             csv_reader = csv.reader(csv_file)
             for row in csv_reader:
+                # print(f"`{row}`")
+                if len(row) == 0:   # skip blank lines
+                    continue
                 train_edges.append([int(row[0]), int(row[1])])
         csv_file.close()
 

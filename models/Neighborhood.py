@@ -131,7 +131,7 @@ class AdamicAdar(LinkPredictor):
         if model_path is None:
             model_path = "pickle/adamicadar.pickle"
         else:
-            model_path += "adamicadar.pickle"
+            model_path += "/adamicadar.pickle"
 
         with open(model_path, 'wb') as handle:
             pickle.dump(self.predictions, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -140,7 +140,7 @@ class AdamicAdar(LinkPredictor):
         if model_path is None:
             model_path = "pickle/adamicadar.pickle"
         else:
-            model_path += "adamicadar.pickle"
+            model_path += "/adamicadar.pickle"
         
         with open(model_path, 'rb') as handle:
             self.predictions = pickle.load(handle)
@@ -183,7 +183,7 @@ class RuntimeCN(LinkPredictor):
         if model_path is None:
             model_path = "pickle/runtime_cn.pickle"
         else:
-            model_path += "runtime_cn.pickle"
+            model_path += "/runtime_cn.pickle"
 
         with open(model_path, 'wb') as handle:
             pickle.dump(self.adj_mat, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -192,7 +192,7 @@ class RuntimeCN(LinkPredictor):
         if model_path is None:
             model_path = "pickle/runtime_cn.pickle"
         else:
-            model_path += "runtime_cn.pickle"
+            model_path += "/runtime_cn.pickle"
         
         with open(model_path, 'rb') as handle:
             self.adj_mat = pickle.load(handle)

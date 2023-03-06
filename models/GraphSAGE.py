@@ -26,6 +26,8 @@ class GraphSAGE(LinkPredictor):
         
         num_nodes = graph.number_of_nodes()
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if torch.cuda.is_available():
+            print("=> Using cuda")
         optim_wd = 0
         self.batch_size = batch_size
 

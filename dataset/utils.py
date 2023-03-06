@@ -27,7 +27,6 @@ def load_data(test_as_tensor=False, perturbation_path=None):
     # Add back all nodes that were disconnected during perturbation
     for node in range(NUM_NODES):
         if not G.has_node(node):
-            print(node, "not in graph")
             G.add_node(node)
         
 

@@ -182,7 +182,7 @@ class RuntimeCN(LinkPredictor):
     def save_model(self, model_path=None):
         if model_path is None:
             model_path = "pickle/runtime_cn.pickle"
-        else:
+        elif model_path[-7:] != ".pickle":
             model_path += "/runtime_cn.pickle"
 
         with open(model_path, 'wb') as handle:
@@ -191,7 +191,7 @@ class RuntimeCN(LinkPredictor):
     def load_model(self, model_path=None):
         if model_path is None:
             model_path = "pickle/runtime_cn.pickle"
-        else:
+        elif model_path[-7:] != ".pickle":
             model_path += "/runtime_cn.pickle"
         
         with open(model_path, 'rb') as handle:

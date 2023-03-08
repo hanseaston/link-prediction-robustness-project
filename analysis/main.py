@@ -18,137 +18,111 @@ import time
 
 import matplotlib.pyplot as plt
 
+# TODO: Can get edge info by looking at the split dict
+#       Edges should be in the same order os those
 
-"""...
+
+"""This file contains functions for aggregating edge scores into plots, figures, and tables.
+Assumes a directory structure given by score_edges.py .
 """
 
 
 def main():
-    model_type, model_name, model_list, output_paths = get_params("runtime_cn")
-
-    # NOTE: This line only needs to run once
-    get_scores(model_type, model_name, model_list, output_paths)
-
-    # NOTE: Use this to check that you've properly saved edges + scores
-    analyze_models(output_paths)
+    plot_hits()
 
 
+def analyze_ranking():
+    model2prop_perf = {}
 
-def analyze_models(score_paths):
+    props = [0, 0.01, 0.1, 0.25, 0.5, 1]
+
+    # Get performance for different models
+    for pert in ["add", "remove"]:
+        for prop in props:
+            for model in ["gnn", "runtime_cn"]:
+
+                score_path = f"results/scores/random/{pert}/{prop}/{model}_scores.pth"
+
+                if not os.path.isfile(score_path):
+                    print(f"Skipping:\t{model}\t{pert}\t{prop}")
+                    continue
+
+                score_dict = pickle.load(open(score_path, "rb"))
+
+                hits = ...
+                print(f"{model}\t{pert}\t{prop}\t{hits}")
+
+                if model not in model2prop_perf:
+                    model2prop_perf[model] = []
+                
+                if pert == "remove":
+                    prop *= -1
+                model2prop_perf[model].append((prop, hits))
+
+
+def plot_hits():
     """ Analyzes model defined at top of file. Assumes directory structure given by running
     get scores.
     """
 
-    _, split_edge = load_data()
+    out_dir = "results/figures"
 
-    for score_path in score_paths:
-        if not os.path.isfile(score_path):  # Skip paths that haven't been trained
-            continue
-        
-        results_test = {}
-        
-        # Load scores
-        score_dict = pickle.load(open(score_path, "rb"))
-        
-        # metrics on test test
-        evaluator = Evaluator(name='ogbl-ddi')
-        for K in [20, 50, 100]:
-            evaluator.K = K
-            hits = evaluator.eval(score_dict)[f'hits@{K}']
+    # Hits@K
+    K = 20
+    evaluator = Evaluator(name='ogbl-ddi')
+    evaluator.K = K
 
-            results_test[f'Hits@{K}'] = hits
-
-        print(f"{score_path}\n\t{results_test}")
-
-
-def save_scores(model, output_path):
-    """
-    Saves model scores to an an output path. Should end in .pth.
-    """
-    _, split_edge = load_data()
-    
-    print("=> Testing model")
-    print("\tScoring edges...")
-
-    pos_test_pred = model.score_edges(split_edge["test"]["edge"])
-    neg_test_pred = model.score_edges(split_edge["test"]["edge_neg"])
-
-    score_dict = {
-        'y_pred_pos': np.array(pos_test_pred),
-        'y_pred_neg': np.array(neg_test_pred),
+    model_cmap = {
+        "gnn": "red",
+        "runtime_cn": "blue"
+    }
+    model_name = {
+        "gnn": "GraphSAGE",
+        "runtime_cn": "Common Neighbors"
     }
 
-    pickle.dump(score_dict, open(output_path, "wb"))
+    props = [0, 0.01, 0.1, 0.25, 0.5, 1]
 
+    model2prop_perf = {}
 
-def get_scores(model_type, model_name, model_list, output_paths):
+    # Get performance for different models
+    for pert in ["add", "remove"]:
+        for prop in props:
+            for model in ["gnn", "runtime_cn"]:
 
-    for model_path, output_path in zip(model_list, output_paths):
-        if not os.path.isfile(model_path):  # Skip model paths that haven't been trained
-            print(f"\tSkipping {model_path}...")
-            continue
-        model = model_type()
-        model.load_model(model_path)
-        # Make all directories in the path
-        output_dir = os.path.join(*output_path.split("/")[:-1])
-        os.makedirs(output_dir, exist_ok=True)
-        save_scores(model, output_path)
+                score_path = f"results/scores/random/{pert}/{prop}/{model}_scores.pth"
 
+                if not os.path.isfile(score_path):
+                    print(f"Skipping:\t{model}\t{pert}\t{prop}")
+                    continue
 
-def get_params(model_name):
-    """ Big switch statement to get the correct model paths for each model.
-    """
+                score_dict = pickle.load(open(score_path, "rb"))
 
-    if model_name == "runtime_cn":
-        # Define what model type you're using here
-        model_type = RuntimeCN
-        model_name = "runtime_cn"
+                hits = evaluator.eval(score_dict)[f'hits@{K}']
+                print(f"{model}\t{pert}\t{prop}\t{hits}")
 
-        # Create a list of model paths and the corresponding output path to use
-        # NOTE: You don't need to use list comprehension here, just whatever works!
-        model_list = [
-            f"results/random/{pert}/{prop}/{model_name}.pickle"
-                for pert in ["add", "remove"]
-                    for prop in [0, 0.01, 0.1, 0.25, 0.5, 1]
-        ]
+                if model not in model2prop_perf:
+                    model2prop_perf[model] = []
+                
+                if pert == "remove":
+                    prop *= -1
+                model2prop_perf[model].append((prop, hits))
+                
 
-        # NOTE: Please put your models scores in this directory tho: `results/scores/random/{pert}/{prop}`
-        #       where `pert`` and `prop`` are the perturbation types (e.g., add, remove) and prop is the
-        #       proportion of the dataset that was perturbed.
-        output_paths = [
-            f"results/scores/random/{pert}/{prop}/{model_name}_scores.pth"
-                for pert in ["add", "remove"]
-                    for prop in [0, 0.01, 0.1, 0.25, 0.5, 1]
-        ]
     
-    elif model_name == "gnn":
-        model_type = GraphSAGE
-        model_name = "gnn"
+    for model, color in model_cmap.items():
+        data_list = model2prop_perf[model]
+        data_list.sort(key = lambda pair: pair[0])
+        x_val = [pair[0] for pair in data_list]
+        y_val = [pair[1] for pair in data_list]
+        plt.plot(x_val, y_val, label=model_name[model], c=color)
 
-        model_list = [
-            f"results/random/{pert}/{prop}/{model_name}.pt"
-                for pert in ["add", "remove"]
-                    for prop in [0, 0.01, 0.1, 0.25, 0.5, 1]
-        ]
-
-        output_paths = [
-            f"results/scores/random/{pert}/{prop}/{model_name}_scores.pth"
-                for pert in ["add", "remove"]
-                    for prop in [0, 0.01, 0.1, 0.25, 0.5, 1]
-        ]
-
-    # TODO: Add your models here
-    # elif:
-    #     ...
-
-    else:
-        raise Exception(f"Did not recognize {model_name}")
-
-    return model_type, model_name, model_list, output_paths
-
-
-
-
+    # TODO: Maybe we could add dotted lines for unperturbed perfromance for each model
+    plt.xlabel("Proportion Perturbed")
+    # plt.xticks([-0.5, -0.25, -0.1, -0.01, 0, 0.01, 0.1, 0.25, 0.5, 1])
+    plt.ylabel(f"Hits@{K}")
+    plt.legend()
+    plt.savefig(out_dir + f"/hits@{K}.png")
 
 
 

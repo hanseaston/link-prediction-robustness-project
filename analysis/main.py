@@ -34,7 +34,9 @@ def main():
 def analyze_ranking():
     model2prop_perf = {}
 
-    props = [0, 0.01, 0.1, 0.25, 0.5, 1]
+    props = [0, 0.1, 0.25, 0.5, 1]
+
+    # TODO: Look at change in ranking for each positive edge
 
     # Get performance for different models
     for pert in ["add", "remove"]:
@@ -56,8 +58,10 @@ def analyze_ranking():
                     model2prop_perf[model] = []
                 
                 if pert == "remove":
-                    prop *= -1
-                model2prop_perf[model].append((prop, hits))
+                    prop_print = prop * -1
+                else:
+                    prop_print = prop
+                model2prop_perf[model].append((prop_print, hits))
 
 
 def plot_hits():
@@ -68,27 +72,29 @@ def plot_hits():
     out_dir = "results/figures"
 
     # Hits@K
-    K = 20
+    K = 50
     evaluator = Evaluator(name='ogbl-ddi')
     evaluator.K = K
 
     model_cmap = {
         "gnn": "red",
-        "runtime_cn": "blue"
+        "runtime_cn": "blue",
+        "trained_mf": "green"
     }
     model_name = {
         "gnn": "GraphSAGE",
-        "runtime_cn": "Common Neighbors"
+        "runtime_cn": "Common Neighbors",
+        "trained_mf": "Matrix Factorization"
     }
 
-    props = [0, 0.01, 0.1, 0.25, 0.5, 1]
+    props = [0, 0.1, 0.25, 0.5, 1]
 
     model2prop_perf = {}
 
     # Get performance for different models
     for pert in ["add", "remove"]:
         for prop in props:
-            for model in ["gnn", "runtime_cn"]:
+            for model in model_name.keys():
 
                 score_path = f"results/scores/random/{pert}/{prop}/{model}_scores.pth"
 
@@ -105,8 +111,11 @@ def plot_hits():
                     model2prop_perf[model] = []
                 
                 if pert == "remove":
-                    prop *= -1
-                model2prop_perf[model].append((prop, hits))
+                    prop_print = prop * -1
+                else:
+                    prop_print = prop
+
+                model2prop_perf[model].append((prop_print, hits))
                 
 
     

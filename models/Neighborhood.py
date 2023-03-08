@@ -130,8 +130,6 @@ class AdamicAdar(LinkPredictor):
     def save_model(self, model_path=None):
         if model_path is None:
             model_path = "pickle/adamicadar.pickle"
-        else:
-            model_path += "/adamicadar.pickle"
 
         with open(model_path, 'wb') as handle:
             pickle.dump(self.predictions, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -139,8 +137,6 @@ class AdamicAdar(LinkPredictor):
     def load_model(self, model_path=None):
         if model_path is None:
             model_path = "pickle/adamicadar.pickle"
-        else:
-            model_path += "/adamicadar.pickle"
         
         with open(model_path, 'rb') as handle:
             self.predictions = pickle.load(handle)

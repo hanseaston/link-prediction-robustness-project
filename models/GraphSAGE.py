@@ -98,27 +98,29 @@ class GraphSAGE(LinkPredictor):
 
             result = {}
 
-            pos_valid_preds = self.score_edges(val_edges["edge"])
-            neg_valid_preds = self.score_edges(val_edges["edge_neg"])
+            # Don't start saving until epoch 90
+            if e > 100:
+                pos_valid_preds = self.score_edges(val_edges["edge"])
+                neg_valid_preds = self.score_edges(val_edges["edge_neg"])
 
-            # metrics on validation test
-            for K in [20, 50, 100]:
-                evaluator.K = K
-                hits = evaluator.eval({
-                    'y_pred_pos': np.array(pos_valid_preds),
-                    'y_pred_neg': np.array(neg_valid_preds),
-                })[f'hits@{K}']
+                # metrics on validation test
+                for K in [20]:
+                    evaluator.K = K
+                    hits = evaluator.eval({
+                        'y_pred_pos': np.array(pos_valid_preds),
+                        'y_pred_neg': np.array(neg_valid_preds),
+                    })[f'hits@{K}']
 
-                result[f'Hits@{K}'] = hits
+                    result[f'Hits@{K}'] = hits
 
-            val_performance = result['Hits@20']
-            if (e+1)%10 == 0:
-                print(result)
-            if val_performance > max_val:
-                os.makedirs(f"{out_path}/gnn_trained/", exist_ok=True)
-                self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_")
-                max_val = val_performance
-                print("=> max val =", max_val)
+                val_performance = result['Hits@20']
+                if (e+1)%10 == 0:
+                    print(result)
+                if val_performance > max_val:
+                    os.makedirs(f"{out_path}/gnn_trained/", exist_ok=True)
+                    self.save_model(model_path=f"{out_path}/gnn_trained/ep{e}_gnn.pt")
+                    max_val = val_performance
+                    print("=> max val =", max_val)
 
 
 

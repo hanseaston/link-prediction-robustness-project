@@ -3,6 +3,8 @@ import os
 sys.path.append(os.getcwd())
 #####################################################################
 
+import gzip
+import shutil
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models.GraphSAGE import GraphSAGE
 from models.Neighborhood import RuntimeCN
@@ -69,18 +71,13 @@ def plot_hits():
     get scores.
     """
 
-    out_dir = "results/figures"
-
     # Hits@K
-    K = 50
+    K = 20
     evaluator = Evaluator(name='ogbl-ddi')
     evaluator.K = K
 
-    model_cmap = {
-        "gnn": "red",
-        "runtime_cn": "blue",
-        "trained_mf": "green"
-    }
+    pert_type = "random"
+
     model_name = {
         "gnn": "GraphSAGE",
         "runtime_cn": "Common Neighbors",
@@ -89,23 +86,43 @@ def plot_hits():
 
     props = [0, 0.1, 0.25, 0.5, 1]
 
+
     model2prop_perf = {}
+    model_cmap = {
+        "gnn": "red",
+        "runtime_cn": "blue",
+        "trained_mf": "green"
+    }
+    out_dir = f"results/figures/{pert_type}"
 
     # Get performance for different models
     for pert in ["add", "remove"]:
         for prop in props:
             for model in model_name.keys():
 
-                score_path = f"results/scores/random/{pert}/{prop}/{model}_scores.pth"
-
+                score_path = f"results/scores/{pert_type}/{pert}/{prop}/{model}_scores.pth"
+                
                 if not os.path.isfile(score_path):
-                    print(f"Skipping:\t{model}\t{pert}\t{prop}")
-                    continue
+                    # NOTE: This is needed if some of the scores are still zipped
+                    if os.path.isfile(score_path + ".gz"):
+                        with gzip.open(score_path + ".gz", 'rb') as f_in:
+                            with open(score_path, 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                    else:
+                        print(f"=> Skipping:\t{model}\t{pert}\t{prop}")
+                        print(f"\t\t{score_path}.gz")
+                        continue
 
                 score_dict = pickle.load(open(score_path, "rb"))
 
+                start = time.time()
                 hits = evaluator.eval(score_dict)[f'hits@{K}']
-                print(f"{model}\t{pert}\t{prop}\t{hits}")
+                end = time.time()
+
+                print(f"{model}\t{pert}\t{prop}\t{hits}\t time: {end - start}")
+                for k, v in score_dict.items():
+                    print("\t", model, type(v[0]), v[0])
+                
 
                 if model not in model2prop_perf:
                     model2prop_perf[model] = []
@@ -119,7 +136,8 @@ def plot_hits():
                 
 
     
-    for model, color in model_cmap.items():
+    for model in model_name.keys():
+        color = model_cmap[model]
         data_list = model2prop_perf[model]
         data_list.sort(key = lambda pair: pair[0])
         x_val = [pair[0] for pair in data_list]

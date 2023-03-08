@@ -3,10 +3,9 @@ import os
 sys.path.append(os.getcwd())
 #####################################################################
 
-## TODO: Write a script for analyzing
-
 from ogb.linkproppred import PygLinkPropPredDataset, Evaluator
 from models.GraphSAGE import GraphSAGE
+from models.Neighborhood import RuntimeCN
 import pandas as pd
 import numpy as np
 import networkx as nx
@@ -25,7 +24,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    model_type, model_name, model_list, output_paths = get_params("gnn")
+    model_type, model_name, model_list, output_paths = get_params("runtime_cn")
 
     # NOTE: This line only needs to run once
     get_scores(model_type, model_name, model_list, output_paths)

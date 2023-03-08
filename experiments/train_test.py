@@ -23,15 +23,19 @@ TRAIN = True
 
 model_types = [
     # (GraphSAGE, "graphsage"),
-    # (CommonNeighbor, "commonneighbors"),
     (RuntimeCN, "runtime_cn"),
     # (AdamicAdar, "adamicadar"),
     # (Node2Vec, "node2vec")
 ]
 
-perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
-                ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
-# perturb_list = [("add", 0.5), ("remove", 0), ("swap", 0.01)]
+# perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
+#                 ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
+
+# NOTE: Currently training these
+# perturb_list = [("remove", 0.01), ("remove", 0.1),("remove", 0.5), ("add", 0.01)]
+
+# perturb_list = [("remove", 0.5), ("add", 0.5), ("remove", 0.25), ("add", 0.25)]
+perturb_list = [("remove", 0.1), ("add", 0.1)]
 
 def main():
 
@@ -39,7 +43,7 @@ def main():
     _, split_edge_tensor = load_data(test_as_tensor=True)
     _, split_edge_list = load_data()
 
-    for perturb_type in ["random"]:
+    for perturb_type in ["adversial"]:
         for change, prop in perturb_list:
             
             data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
@@ -74,30 +78,11 @@ def main():
 
                     else:
                         model.train(G)
+
                     model.save_model(out_path)
-                    model.save_model(f"trained_models/{perturb_type}/{change}/{prop}")
 
                 print(f"==> Testing")
-                # if name == "graphsage":
-                #     # Get the best model from the gnn_trained directory
-                #     load_path = f"{out_path}/gnn_trained"
-                #     print("=>", load_path)
-                #     if not os.path.isdir(f"{load_path}"):
-                #         print("\tcontinue...")
-                #         continue
-                #     path_list = os.listdir(load_path)
-                #     # Use string formatting to get the latest epoch
-                #     path_list.sort(key = lambda pth: int(pth[2:-7]))
-                #     print("\tBest model:", path_list[-1])
-                #     model.load_model(f"{load_path}/{path_list[-1]}")
-                #     model.save_model(out_path)
-
-                # TODO: Change this back
                 model.load_model(out_path)
-                # if not os.path.isfile(f"trained_models/{perturb_type}/{change}/{prop}/gnn.pt"):
-                #     print("\tcontinue...")
-                #     continue
-                model.load_model(f"trained_models/{perturb_type}/{change}/{prop}")
 
                 if name == "graphsage":
                     split_edge = split_edge_tensor

@@ -3,9 +3,12 @@ import os
 sys.path.append(os.getcwd())
 #####################################################################
 
+
 import gzip
 import shutil
 from ogb.linkproppred import Evaluator
+
+from itertools import compress
 
 import pandas as pd
 import numpy as np
@@ -18,9 +21,6 @@ from dataset.utils import load_data
 import time
 
 import matplotlib.pyplot as plt
-
-# TODO: Can get edge info by looking at the split dict
-#       Edges should be in the same order os those
 
 
 """This file contains functions for aggregating edge scores into plots, figures, and tables.
@@ -45,7 +45,8 @@ model_name = {
 
 
 def main():
-    props = [-0.5, -0.25, -0.1, -0.01, 0, 0.01, 0.1, 0.25, 0.5, 1]
+    print("Running analysis...")
+    props = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5, 1]
     pert_type = "random"
     models = [
         "gnn",
@@ -54,14 +55,17 @@ def main():
     ]
     out_dir = f"results/figures/{pert_type}"
     
-    # for K in [20, 50, 100]:
-    #     plot_hits(props, pert_type, models, out_dir, K=K)
+    print("Plotting hits...")
+    for K in [20, 50, 100]:
+        plot_hits(props, pert_type, models, out_dir, K=K)
 
+    print("Ranking edges...")
     rank_dict, baseline = get_rankings(props, pert_type, models)
 
-    # plot_average_edge_change(rank_dict, baseline, props, out_dir)
+    print("Plotting average edge change...")
+    plot_average_edge_change(rank_dict, baseline, props, out_dir)
 
-    error_analysis(rank_dict, baseline, 0.5, out_dir)
+    # error_analysis(rank_dict, baseline, 0.5, out_dir)
 
 
 def get_rankings(props, pert_type, models):
@@ -112,7 +116,7 @@ def get_rankings(props, pert_type, models):
     return rank_dict, baseline
 
 
-def error_analysis(rank_dict, baseline, props, out_dir): 
+def error_analysis_degree(rank_dict, baseline, props, out_dir): 
 
     model = "gnn"
     baseline_rank = baseline[model]
@@ -147,6 +151,72 @@ def error_analysis(rank_dict, baseline, props, out_dir):
 
     plt.savefig(f"{out_dir}/degree_scatter.png")
     plt.clf()
+
+
+def error_analysis(rank_dict, baseline, props, out_dir): 
+
+    model = "gnn"
+    baseline_rank = baseline[model]
+
+    G, split_dict = load_data()
+    pos_test_edges = split_dict["test"]["edge"]
+
+    # start = time.time()
+    # edge2bet = nx.edge_betweenness_centrality(G)  # Takes 30 min to run
+    # end = time.time()
+    # print("Time:", (end - start)/60)
+
+    with open("tmp.pkl", "rb") as f:
+        edge2bet = pickle.load(f)
+
+    # Order edges so that smaller node comes first
+    e2b = {}
+    for edge, bet in edge2bet.items():
+        e2b[min(edge[0], edge[1]), max(edge[0], edge[1])] = bet
+    
+    pos_e = []
+    for edge in pos_test_edges:
+        pos_e.append((min(edge[0], edge[1]), max(edge[0], edge[1])))
+
+    pos_test_edges = pos_e
+    edge2bet = e2b
+
+    # print(tuple(pos_test_edges[1]))
+    # print(list(edge2bet.keys())[0])
+
+    idxs = [e in edge2bet for e in pos_test_edges]
+    print(sum(idxs), "out of", len(pos_test_edges))
+    betweenness = [edge2bet[e] for e in pos_test_edges if e in edge2bet]
+    pos_test_edges = list(compress(pos_test_edges, idxs))
+
+
+
+    prop_cmap = {
+        0.1: "#d95f02",
+        0.25: "#7570b3",
+        0.5: "#1b9e77"
+    }
+
+    props = [
+        0.5,
+        # 0.25,
+        0.1
+    ]
+
+    for prop in props:
+        pert_rank = rank_dict[model][prop]
+        prop_change = np.divide(pert_rank, baseline_rank)
+        plt.scatter(betweenness, prop_change, alpha=0.2, c=prop_cmap[prop], label=prop)
+
+    plt.plot([0, 1600], [1, 1], label="No Change", c="#8dd3c7", linestyle="--")
+    plt.legend()
+    plt.xlabel("Average Degree")
+    plt.ylabel("Average Change in Rank")
+    plt.yscale("log")
+
+    plt.savefig(f"{out_dir}/betweenness_scatter.png")
+    plt.clf()
+
 
 
 def plot_average_edge_change(rank_dict, baseline, props, out_dir):
@@ -218,6 +288,7 @@ def plot_hits(props, pert_type, models, out_dir, K=20):
                         with open(score_path, 'wb') as f_out:
                             shutil.copyfileobj(f_in, f_out)
                 else:
+                    print("Skipping", score_path)
                     continue
 
             score_dict = pickle.load(open(score_path, "rb"))
@@ -226,8 +297,6 @@ def plot_hits(props, pert_type, models, out_dir, K=20):
 
             if model not in model2prop_perf:
                 model2prop_perf[model] = []
-            
-
             model2prop_perf[model].append(hits)
                 
 
@@ -246,7 +315,6 @@ def plot_hits(props, pert_type, models, out_dir, K=20):
         plt.plot(props, y_val, label=model_name[model], c=color)
         plt.plot([props[0], props[-1]], [base, base], c=color, linestyle="--", alpha=0.5)
 
-    # TODO: Maybe we could add dotted lines for unperturbed perfromance for each model
     plt.xlabel("Proportion Perturbed")
     plt.ylabel(f"Hits@{K}")
     plt.legend()

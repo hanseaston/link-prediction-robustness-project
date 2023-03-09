@@ -43,7 +43,7 @@ def main():
     _, split_edge_tensor = load_data(test_as_tensor=True)
     _, split_edge_list = load_data()
 
-    for perturb_type in ["random"]:
+    for perturb_type in ["adversial"]:
         for change, prop in perturb_list:
             
             data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"

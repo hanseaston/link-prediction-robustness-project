@@ -164,10 +164,9 @@ class RuntimeCN(LinkPredictor):
             if deg != sparse_deg:
                 print(n, deg, sparse_deg)
 
-        print(self.adj_mat.shape)
     
     def score_edge(self, node1:int, node2:int) -> float:
-        return self.adj_mat.getrow(node1).dot(self.adj_mat.getrow(node2).T)
+        return self.adj_mat.getrow(node1).dot(self.adj_mat.getrow(node2).T).sum()
     
     def score_edges(self, edge_list:list):
         scores = []

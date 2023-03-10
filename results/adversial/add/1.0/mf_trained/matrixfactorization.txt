@@ -1,0 +1,5 @@
+On validation set, model achieves:
+{'Hits@20': 2.9965015844002127e-05, 'Hits@50': 6.742128564900479e-05, 'Hits@100': 0.00022473761883001596}
+
+On test set, model achieves:
+{'Hits@20': 0.0, 'Hits@50': 0.0, 'Hits@100': 0.0}

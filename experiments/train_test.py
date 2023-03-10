@@ -22,23 +22,19 @@ TRAIN = True
 
 
 model_types = [
-    # (GraphSAGE, "graphsage"),
-    (RuntimeCN, "runtime_cn"),
+    (GraphSAGE, "graphsage"),
+    # (RuntimeCN, "runtime_cn"),
     # (AdamicAdar, "adamicadar"),
     # (Node2Vec, "node2vec")
 ]
 
-# perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
-#                 ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
-perturb_list = [("add", 1)]
-# perturb_list = [("remove", 0), ("remove", 0.01), ("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
-#                 ("add", 0.01), ("add", 0.1), ("add", 0.25), ("add", 0.5), ("add", 1)]
+# perturb_list = [("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
+#                 ("add", 0.1), ("add", 0.25), ("add", 0.5)]
 
-# NOTE: Currently training these
-# perturb_list = [("remove", 0.01), ("remove", 0.1),("remove", 0.5), ("add", 0.01)]
-
-# perturb_list = [("remove", 0.5), ("add", 0.5), ("remove", 0.25), ("add", 0.25)]
-perturb_list = [("remove", 0.1), ("add", 0.1)]
+# NOTE: Currently running both of these (in separate terminals) as of 3/8 8:00 am on the cloud
+# TODO: Add seems to be getting destroyed. Retry these with remove instead of add
+# perturb_list = [("remove", 0.1), ("add", 0.1)]
+perturb_list = [("remove", 0.5), ("add", 0.5)]
 
 def main():
 

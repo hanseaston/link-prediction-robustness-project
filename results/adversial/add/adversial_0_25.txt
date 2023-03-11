@@ -1,0 +1,233 @@
+==> Training graphsage: adversial add 0.25
+=> Using cuda
+Epoch 1: loss: 1.20803
+Epoch 2: loss: 0.92084
+=> max val = 1.4982507922001064e-05
+Epoch 3: loss: 0.81929
+=> max val = 0.02126766999528051
+Epoch 4: loss: 0.72225
+=> max val = 0.022586130692416603
+Epoch 5: loss: 0.66098
+Epoch 6: loss: 0.62777
+Epoch 7: loss: 0.60605
+Epoch 8: loss: 0.58927
+Epoch 9: loss: 0.57398
+Epoch 10: loss: 0.55805
+{'Hits@20': 0.0}
+Epoch 11: loss: 0.54614
+Epoch 12: loss: 0.53033
+Epoch 13: loss: 0.51518
+Epoch 14: loss: 0.50561
+Epoch 15: loss: 0.49409
+Epoch 16: loss: 0.48654
+Epoch 17: loss: 0.47792
+Epoch 18: loss: 0.47224
+Epoch 19: loss: 0.4655
+Epoch 20: loss: 0.46198
+{'Hits@20': 0.0}
+Epoch 21: loss: 0.45555
+Epoch 22: loss: 0.4486
+Epoch 23: loss: 0.44526
+Epoch 24: loss: 0.4411
+Epoch 25: loss: 0.4368
+Epoch 26: loss: 0.43373
+Epoch 27: loss: 0.42985
+Epoch 28: loss: 0.42605
+Epoch 29: loss: 0.42412
+Epoch 30: loss: 0.41802
+{'Hits@20': 0.0}
+Epoch 31: loss: 0.41679
+Epoch 32: loss: 0.41407
+Epoch 33: loss: 0.40881
+Epoch 34: loss: 0.40735
+Epoch 35: loss: 0.40388
+Epoch 36: loss: 0.40189
+Epoch 37: loss: 0.40049
+Epoch 38: loss: 0.39795
+Epoch 39: loss: 0.39447
+Epoch 40: loss: 0.39178
+{'Hits@20': 0.0}
+Epoch 41: loss: 0.3908
+Epoch 42: loss: 0.38881
+Epoch 43: loss: 0.38589
+Epoch 44: loss: 0.38395
+Epoch 45: loss: 0.38231
+Epoch 46: loss: 0.38019
+Epoch 47: loss: 0.37861
+Epoch 48: loss: 0.37656
+Epoch 49: loss: 0.37557
+Epoch 50: loss: 0.37335
+{'Hits@20': 8.240379357100585e-05}
+Epoch 51: loss: 0.37189
+Epoch 52: loss: 0.36912
+Epoch 53: loss: 0.36982
+Epoch 54: loss: 0.36617
+Epoch 55: loss: 0.36508
+Epoch 56: loss: 0.36272
+Epoch 57: loss: 0.36201
+Epoch 58: loss: 0.36054
+Epoch 59: loss: 0.36036
+Epoch 60: loss: 0.35743
+{'Hits@20': 0.0}
+Epoch 61: loss: 0.35814
+Epoch 62: loss: 0.35528
+Epoch 63: loss: 0.35567
+Epoch 64: loss: 0.35243
+Epoch 65: loss: 0.35136
+Epoch 66: loss: 0.35115
+Epoch 67: loss: 0.34946
+Epoch 68: loss: 0.34932
+Epoch 69: loss: 0.34905
+Epoch 70: loss: 0.34823
+{'Hits@20': 0.0}
+Epoch 71: loss: 0.34688
+Epoch 72: loss: 0.34493
+Epoch 73: loss: 0.34337
+Epoch 74: loss: 0.34235
+Epoch 75: loss: 0.34132
+Epoch 76: loss: 0.3398
+Epoch 77: loss: 0.34011
+Epoch 78: loss: 0.3401
+Epoch 79: loss: 0.33908
+Epoch 80: loss: 0.3383
+{'Hits@20': 7.491253961000532e-06}
+Epoch 81: loss: 0.3374
+Epoch 82: loss: 0.33716
+Epoch 83: loss: 0.33491
+Epoch 84: loss: 0.33401
+Epoch 85: loss: 0.33429
+Epoch 86: loss: 0.33383
+Epoch 87: loss: 0.33213
+Epoch 88: loss: 0.33214
+Epoch 89: loss: 0.33259
+Epoch 90: loss: 0.3311
+{'Hits@20': 0.0}
+Epoch 91: loss: 0.32977
+Epoch 92: loss: 0.33052
+Epoch 93: loss: 0.32869
+Epoch 94: loss: 0.32786
+Epoch 95: loss: 0.32764
+Epoch 96: loss: 0.32751
+Epoch 97: loss: 0.3257
+Epoch 98: loss: 0.32505
+Epoch 99: loss: 0.32554
+Epoch 100: loss: 0.32457
+{'Hits@20': 3.745626980500266e-05}
+Epoch 101: loss: 0.32452
+Epoch 102: loss: 0.32315
+Epoch 103: loss: 0.32572
+Epoch 104: loss: 0.32285
+Epoch 105: loss: 0.32211
+Epoch 106: loss: 0.32283
+Epoch 107: loss: 0.32118
+Epoch 108: loss: 0.32149
+Epoch 109: loss: 0.31994
+Epoch 110: loss: 0.31996
+{'Hits@20': 0.0}
+Epoch 111: loss: 0.31856
+Epoch 112: loss: 0.31918
+Epoch 113: loss: 0.31759
+Epoch 114: loss: 0.3178
+Epoch 115: loss: 0.31871
+Epoch 116: loss: 0.31663
+Epoch 117: loss: 0.31764
+Epoch 118: loss: 0.31664
+Epoch 119: loss: 0.31514
+Epoch 120: loss: 0.31501
+{'Hits@20': 4.494752376600319e-05}
+Epoch 121: loss: 0.31642
+Epoch 122: loss: 0.31658
+Epoch 123: loss: 0.31489
+Epoch 124: loss: 0.31447
+Epoch 125: loss: 0.31512
+Epoch 126: loss: 0.31253
+Epoch 127: loss: 0.31377
+Epoch 128: loss: 0.31275
+Epoch 129: loss: 0.31154
+Epoch 130: loss: 0.31246
+{'Hits@20': 5.9930031688004255e-05}
+Epoch 131: loss: 0.31108
+Epoch 132: loss: 0.31081
+Epoch 133: loss: 0.31105
+Epoch 134: loss: 0.31005
+Epoch 135: loss: 0.3104
+Epoch 136: loss: 0.31038
+Epoch 137: loss: 0.31167
+Epoch 138: loss: 0.30939
+Epoch 139: loss: 0.30975
+Epoch 140: loss: 0.30826
+{'Hits@20': 1.4982507922001064e-05}
+Epoch 141: loss: 0.30897
+Epoch 142: loss: 0.30841
+Epoch 143: loss: 0.30824
+Epoch 144: loss: 0.30779
+Epoch 145: loss: 0.30919
+Epoch 146: loss: 0.30842
+Epoch 147: loss: 0.30778
+Epoch 148: loss: 0.30743
+Epoch 149: loss: 0.30637
+Epoch 150: loss: 0.30654
+{'Hits@20': 5.9930031688004255e-05}
+Epoch 151: loss: 0.30605
+Epoch 152: loss: 0.30596
+Epoch 153: loss: 0.30714
+Epoch 154: loss: 0.30607
+Epoch 155: loss: 0.30557
+Epoch 156: loss: 0.30554
+Epoch 157: loss: 0.3051
+Epoch 158: loss: 0.305
+Epoch 159: loss: 0.30417
+Epoch 160: loss: 0.30477
+{'Hits@20': 0.0}
+Epoch 161: loss: 0.30336
+Epoch 162: loss: 0.30436
+Epoch 163: loss: 0.30468
+Epoch 164: loss: 0.30354
+Epoch 165: loss: 0.30342
+Epoch 166: loss: 0.30418
+Epoch 167: loss: 0.30251
+Epoch 168: loss: 0.30287
+Epoch 169: loss: 0.3044
+Epoch 170: loss: 0.3023
+{'Hits@20': 0.0001423338252590101}
+Epoch 171: loss: 0.30266
+Epoch 172: loss: 0.30244
+Epoch 173: loss: 0.30209
+Epoch 174: loss: 0.30194
+Epoch 175: loss: 0.30001
+Epoch 176: loss: 0.30048
+Epoch 177: loss: 0.3011
+Epoch 178: loss: 0.30189
+Epoch 179: loss: 0.30068
+Epoch 180: loss: 0.30129
+{'Hits@20': 1.4982507922001064e-05}
+Epoch 181: loss: 0.30109
+Epoch 182: loss: 0.30045
+Epoch 183: loss: 0.30078
+Epoch 184: loss: 0.29884
+Epoch 185: loss: 0.30079
+Epoch 186: loss: 0.29976
+Epoch 187: loss: 0.30074
+Epoch 188: loss: 0.29912
+Epoch 189: loss: 0.29858
+Epoch 190: loss: 0.29853
+{'Hits@20': 6.742128564900479e-05}
+Epoch 191: loss: 0.29954
+Epoch 192: loss: 0.29966
+Epoch 193: loss: 0.29954
+Epoch 194: loss: 0.30089
+Epoch 195: loss: 0.29958
+Epoch 196: loss: 0.29789
+Epoch 197: loss: 0.29856
+Epoch 198: loss: 0.29819
+Epoch 199: loss: 0.29806
+Epoch 200: loss: 0.29823
+{'Hits@20': 2.2473761883001596e-05}
+=> results/adversial/add/0.25/gnn_trained
+	Best model: ep3_gnn.pt
+==> Testing
+	Edges scored
+	Val scoring evaluated
+{'Hits@20': 0.022586130692416603, 'Hits@50': 0.03344095768190637, 'Hits@100': 0.042655200053937026}
+{'Hits@20': 0.0, 'Hits@50': 0.0, 'Hits@100': 5.2438777727003724e-05}
+	Script took 73.23 minutes to run

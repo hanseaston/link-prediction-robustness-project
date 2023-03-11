@@ -47,7 +47,7 @@ model_name = {
 def main():
     print("Running analysis...")
     props = [-0.5, -0.25, -0.1, 0, 0.1, 0.25, 0.5, 1]
-    pert_type = "adversial"
+    pert_type = "random"
     models = [
         "gnn",
         "runtime_cn",
@@ -144,8 +144,7 @@ def error_analysis_degree(rank_dict, baseline, out_dir, pert_type):
     for prop in props:
         pert_rank = rank_dict[model][prop * -1]
 
-        # NOTE: I am using substract, rather than using porpotion
-        prop_change = np.abs(np.subtract(pert_rank, baseline_rank))
+        prop_change = np.abs(np.divide(pert_rank, baseline_rank))
 
         perturbed_path = f"dataset/perturbation/{pert_type}_remove_{prop}.csv"
         print("Perturbed path", perturbed_path)

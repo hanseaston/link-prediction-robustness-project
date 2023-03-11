@@ -5,6 +5,7 @@ sys.path.append(os.getcwd())
 
 from models.GraphSAGE import GraphSAGE
 from models.Neighborhood import CommonNeighbor, AdamicAdar, RuntimeCN
+from models.RandomWalkMLP import RandomWalkMLP
 
 # NOTE: Need to add this to the conda env
 # from models.RandomWalk import Node2Vec
@@ -22,10 +23,10 @@ TRAIN = True
 
 
 model_types = [
-    (GraphSAGE, "graphsage"),
+    # (GraphSAGE, "graphsage"),
     # (RuntimeCN, "runtime_cn"),
     # (AdamicAdar, "adamicadar"),
-    # (Node2Vec, "node2vec")
+    (RandomWalkMLP, "randomwalk")
 ]
 
 # perturb_list = [("remove", 0.1), ("remove", 0.25), ("remove", 0.5),
@@ -34,11 +35,13 @@ model_types = [
 # NOTE: Currently running both of these (in separate terminals) as of 3/8 8:00 am on the cloud
 # TODO: Add seems to be getting destroyed. Retry these with remove instead of add
 # perturb_list = [("remove", 0.1), ("add", 0.1)]
-perturb_list = [("remove", 0.5), ("add", 0.5)]
+perturb_list = [("add", 0.0)]
 
 def main():
 
     perturb_dir = "dataset/perturbation"
+
+    # need this for validation set
     _, split_edge_tensor = load_data(test_as_tensor=True)
     _, split_edge_list = load_data()
 
@@ -46,7 +49,11 @@ def main():
         for change, prop in perturb_list:
             
             data_path = perturb_dir + f"/{perturb_type}_{change}_{prop}.csv"
-            G, _ = load_data(perturbation_path=data_path)
+
+            if prop == 0.0:
+                G, _ = load_data()
+            else:
+                G, _ = load_data(perturbation_path=data_path)
 
             for LinkPredictor, name in model_types:
                 start = time.time()
@@ -58,6 +65,7 @@ def main():
 
                 if TRAIN:
                     print(f"==> Training {name}: {perturb_type} {change} {prop}")
+
                     if name == "graphsage":
                         model.train(G, val_edges=split_edge_tensor["valid"], out_path=out_path)
                         
@@ -75,15 +83,29 @@ def main():
                         model.load_model(f"{load_path}/{path_list[-1]}")
                         model.save_model(out_path)
 
+                    elif name == "randomwalk":
+                        embedding_path = f"models/RandomWalkEmbeddings/adversial_{change}_{prop}.pt"
+                        model.train(graph=G, val_edges=split_edge_tensor["valid"], embedding_path=embedding_path, out_path=out_path)
+                        load_path = f"{out_path}/randomwalk_trained"
+                        print("=>", load_path)
+                        if not os.path.isdir(f"{load_path}"):
+                            print(f"\n\nDoes not exist: {load_path}\n")
+                            continue
+                        path_list = os.listdir(load_path)
+                        # Use string formatting to get the latest epoch
+                        path_list.sort(key = lambda pth: int(pth[2:-7]))
+                        print("\tBest model:", path_list[-1])
+                        model.load_model(f"{load_path}/{path_list[-1]}")
+                        model.save_model(out_path)
+
                     else:
                         model.train(G)
-
                     model.save_model(out_path)
 
                 print(f"==> Testing")
                 model.load_model(out_path)
 
-                if name == "graphsage":
+                if name == "graphsage" or name == "randomwalk":
                     split_edge = split_edge_tensor
                 else:
                     split_edge = split_edge_list
@@ -134,9 +156,6 @@ def main():
     end = time.time()
 
     print(f"\tScript took {round((end - start) / 60, 2)} minutes to run")
-
-
-
 
 
 def train():

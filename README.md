@@ -1,8 +1,22 @@
 # LinkPredictionOGB
-Machine Learning for Big Data Project on Link Prediction. [Here](project_proposal.pdf) is a link to our formal project proposal.
+
+Graphs are used to model a wide variety of complex systems ranging from social networks with
+billions of users, to protein-drug interactions that are vital for understanding the effects of a treatment.
+Often, our knowledge about how the components of these systems are related is incomplete. For
+example, a user’s negligence of their social media might lead to outdated or accidental friendships;
+the cost of wet lab experiments prevent biologists from exploring all combinations of protein-drug
+interactions.
+Given the importance of graphs in the big data era, we want to explore methods for link prediction
+and how these methods are affected by varying degrees of noise. We are particularly interested in
+Graph Neural Networks (GNN), but also seek to understand non-deep approaches such as matrix
+completion and simple node proximity measures. In this project proposal, we summarize and critique
+current approaches for link prediction, and outline our experimental procedure for how we intend to
+benchmark our selected methods.
+
+Please refer to our [project final report](final_report.pdf) for additional details on the project.
 
 
-### Papers:
+### Relevant Paper:
 1. [GraphSAGE](https://arxiv.org/pdf/1706.02216.pdf)
 2. [GNN survey](https://arxiv.org/pdf/1901.00596.pdf)
 3. [Link Prediction](http://www.eecs.harvard.edu/~michaelm/CS222/linkpred.pdf)
